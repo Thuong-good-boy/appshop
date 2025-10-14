@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shopnew/pages/category_products.dart';
+import 'package:shopnew/services/share_pref.dart';
 import 'package:shopnew/widget/support_widget.dart';
 
 class Home extends StatefulWidget {
@@ -14,34 +16,62 @@ class _HomeState extends State<Home> {
     "images/laptop.png",
     "images/TV.png",
     "images/watch.png",
+    "images/iphone.png"
   ];
+  List categoryName= [
+  "Headphone",
+    "Laptop",
+    "TV",
+    "Watch",
+    "Phone"
+  ];
+  String? name, image;
+  getthesharedpredf()async{
+    name= await Share_pref().getUserName();
+    image = await Share_pref().getUserImage();
+    setState(() {
+
+    });
+  }
+  ontheload() async{
+      await getthesharedpredf();
+      setState(() {
+
+      });
+  }
+  @override
+  void initState() {
+    ontheload();
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xfff2f2f2),
-      body: Container(
+      body: name == null ? Center(child: CircularProgressIndicator(),): Container(
         margin: EdgeInsets.only(top: 50.0,left: 20.0,right: 20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Hey, Thương",style: Appwidget.boldTextStyle()),
-                    Text("Google morning",style: Appwidget.lightTextStyle(),)
-                  ],
-                ),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.asset("images/boy.jpg",height: 70,width: 70,fit: BoxFit.cover,),
-                )
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text("Hey, "+ name! ,style: Appwidget.boldTextStyle()),
+                      Text("Google morning",style: Appwidget.lightTextStyle(),)
+                    ],
+                  ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.network(image!+"&format=png" ,height: 70,width: 70,fit: BoxFit.cover,),
+                  )
+              
+                ],
+              
+              ),
 
-              ],
-
-            ),
             SizedBox(height: 30.0,),
             Container(
                 width: MediaQuery.of(context).size.width,
@@ -80,7 +110,7 @@ class _HomeState extends State<Home> {
                       scrollDirection: Axis.horizontal,
                       shrinkWrap: true,
                       itemBuilder: (context,index) {
-                        return CategoryTile(image: categories[index]);
+                        return CategoryTile(image: categories[index], name: categoryName[index],);
                       },
                     ),
                   ),
@@ -180,21 +210,26 @@ class _HomeState extends State<Home> {
 
 }
 class CategoryTile extends StatelessWidget {
-  String image;
-  CategoryTile({required this.image});
+  String image, name;
+  CategoryTile({required this.image, required this.name});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white,borderRadius: BorderRadius.circular(10.0)),
-      margin: EdgeInsets.only(right: 20),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Image.asset(image,height: 50.0,width: 50.0,fit: BoxFit.cover,),
-          Icon(Icons.arrow_forward)
-        ],
+    return GestureDetector(
+      onTap: (){
+          Navigator.push(context, MaterialPageRoute(builder: (context)=>CategoryProducts(category: name)));
+      },
+      child: Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(color: Colors.white,borderRadius: BorderRadius.circular(10.0)),
+        margin: EdgeInsets.only(right: 20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Image.asset(image,height: 50.0,width: 50.0,fit: BoxFit.cover,),
+            Icon(Icons.arrow_forward)
+          ],
+        ),
       ),
     );
   }

@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:shopnew/Admin/AddProduct.dart';
 import 'package:shopnew/Admin/LoginAdmin.dart';
 import 'package:shopnew/pages/Login.dart';
+import 'package:shopnew/pages/SignUp.dart';
+import 'package:shopnew/pages/bottomNar.dart';
+import 'package:shopnew/pages/category_products.dart';
+import 'package:shopnew/pages/home.dart';
+import 'package:shopnew/services/constant.dart';
 import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Stripe.publishableKey= Publishablekey;
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -25,7 +32,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: AddProduct(),
+      home: SignUp()
     );
   }
 }

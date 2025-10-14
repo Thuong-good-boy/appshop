@@ -35,6 +35,6 @@ class Share_pref{
   }
   Future<String?> getUserImage()async{
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    return sharedPreferences.getString(userEmailKey);
+    return sharedPreferences.getString(userImageKey);
   }
 }
