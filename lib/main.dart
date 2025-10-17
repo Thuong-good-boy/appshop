@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:shopnew/Admin/AddProduct.dart';
+import 'package:shopnew/Admin/HomeAdmin.dart';
 import 'package:shopnew/Admin/LoginAdmin.dart';
+import 'package:shopnew/Admin/all_orders.dart';
 import 'package:shopnew/pages/Login.dart';
 import 'package:shopnew/pages/SignUp.dart';
 import 'package:shopnew/pages/bottomNar.dart';
@@ -32,7 +34,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: SignUp()
+      home: HomeAdmin()
     );
   }
 }

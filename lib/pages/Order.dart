@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shopnew/pages/ProductDeTail.dart';
+import 'package:shopnew/pages/bottomNar.dart';
 import 'package:shopnew/services/database.dart';
 import 'package:shopnew/services/share_pref.dart';
 import 'package:shopnew/widget/support_widget.dart';
@@ -94,7 +95,18 @@ class _OrderState extends State<Order> {
       appBar: AppBar(
         backgroundColor: Color(0xfff2f2f2),
         title: Text("Lịch sử mua hàng", style: Appwidget.semiboldTextStyle(),),
-      ),
+        leading:
+           GestureDetector(
+            onTap:() {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => BottomNav()));
+            },
+            child: Container(
+              margin: EdgeInsets.only(left: 10.0),
+              child: Icon(Icons.arrow_back_ios_new_outlined),
+            ),
+          ),
+        ),
+
       body: Container(
         margin:  EdgeInsets.only(right: 20.0,left: 20.0),
         child: Column(
