@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:shopnew/Auth-Pages/Login.dart';
 
 class Onboarding extends StatefulWidget {
   const Onboarding({super.key});
@@ -27,7 +28,9 @@ class _OnboardingState extends State<Onboarding> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 GestureDetector(
-
+                      onTap: (){
+                        Navigator.push(context, MaterialPageRoute(builder: (context)=>Login()));
+                      },
                   child: Container(
                     margin: EdgeInsets.only(right: 40,top: 40),
                     padding: EdgeInsets.all(30.0),

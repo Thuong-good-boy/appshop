@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:random_string/random_string.dart';
-import 'package:shopnew/pages/Login.dart';
+import 'package:shopnew/Auth-Pages/Login.dart';
 import 'package:shopnew/pages/bottomNar.dart';
 import 'package:shopnew/services/database.dart';
 import 'package:shopnew/services/share_pref.dart';
@@ -97,7 +97,7 @@ class _SignInState extends State<SignUp> {
                   ),
                 ),
                 SizedBox(height: 20.0),
-                Text("Password", style: Appwidget.semiboldTextStyle()),
+                Text("mật khẩu", style: Appwidget.semiboldTextStyle()),
                 SizedBox(height: 20.0),
                 Container(
                   padding: EdgeInsets.only(left: 20.0),
@@ -109,14 +109,42 @@ class _SignInState extends State<SignUp> {
                     obscureText: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return "Xin hãy nhập password của bạn";
+                        return "Xin hãy nhập mật khẩu của bạn";
                       }
                       return null;
                     },
                     controller: passwordcontroller,
                     decoration: InputDecoration(
                       border: InputBorder.none,
-                      hintText: "Password",
+                      hintText: "Mật khẩu",
+                    ),
+                  ),
+                ),
+                SizedBox(height: 20.0),
+                Text("Xác nhận mật khẩu", style: Appwidget.semiboldTextStyle()),
+                SizedBox(height: 20.0),
+                Container(
+                  padding: EdgeInsets.only(left: 20.0),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF4F5F9),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: TextFormField(
+                    obscureText: true,
+                    validator: (value) {
+                      if (passwordcontroller.text == null || passwordcontroller.text.isEmpty) {
+                        return "Xin hãy nhập mật khẩu của bạn";
+                      }else{
+                        if(passwordcontroller.text !=value){
+                            return "Mật khẩu xác nhận không khớp.";
+
+                        }
+                      }
+                      return null;
+                    },
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      hintText: "Nhập lại mật khẩu",
                     ),
                   ),
                 ),
@@ -126,10 +154,11 @@ class _SignInState extends State<SignUp> {
                     onPressed: _isLoading
                         ? null
                         : () async {
-                            setState(() {
-                              _isLoading = true;
-                            });
                             if (_formkey.currentState!.validate()) {
+
+                              setState(() {
+                                _isLoading = true;
+                              });
                               String name = namecontroller.text;
                               String email = emailcontroller.text;
                               String password = passwordcontroller.text;

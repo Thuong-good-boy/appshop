@@ -2,7 +2,8 @@ import 'dart:math';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:shopnew/pages/SignUp.dart';
+import 'package:shopnew/Auth-Pages/ForgotPassword.dart';
+import 'package:shopnew/Auth-Pages/SignUp.dart';
 import 'package:shopnew/pages/bottomNar.dart';
 import 'package:shopnew/widget/support_widget.dart';
 class Login extends StatefulWidget {
@@ -68,7 +69,11 @@ class _LoginState extends State<Login> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text("Quên mật khẩu?",style: TextStyle(color: Colors.green,fontWeight: FontWeight.w500,fontSize: 18.0),),
+                    GestureDetector(
+                        onTap: (){
+                          Navigator.push(context, MaterialPageRoute(builder: (context)=>Forgotpassword()));
+                        },
+                        child: Text("Quên mật khẩu?",style: TextStyle(color: Colors.green,fontWeight: FontWeight.w500,fontSize: 18.0),)),
                   ],
                 ),
                 SizedBox(height: 30.0,),

@@ -5,11 +5,12 @@ import 'package:shopnew/Admin/AddProduct.dart';
 import 'package:shopnew/Admin/HomeAdmin.dart';
 import 'package:shopnew/Admin/LoginAdmin.dart';
 import 'package:shopnew/Admin/all_orders.dart';
-import 'package:shopnew/pages/Login.dart';
-import 'package:shopnew/pages/SignUp.dart';
+import 'package:shopnew/Auth-Pages/Login.dart';
+import 'package:shopnew/Auth-Pages/SignUp.dart';
 import 'package:shopnew/pages/bottomNar.dart';
 import 'package:shopnew/pages/category_products.dart';
 import 'package:shopnew/pages/home.dart';
+import 'package:shopnew/pages/onboarding.dart';
 import 'package:shopnew/services/constant.dart';
 import 'firebase_options.dart';
 
@@ -34,7 +35,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: HomeAdmin()
+      home: Onboarding()
     );
   }
 }

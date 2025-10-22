@@ -1,5 +1,4 @@
 import 'dart:collection';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shopnew/pages/ProductDeTail.dart';
@@ -16,6 +15,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  Stream? CategoryStream;
   bool search = false;
   List categories = [
     "images/headphone_icon.png",
@@ -27,7 +27,7 @@ class _HomeState extends State<Home> {
   List categoryName = ["Headphone", "Laptop", "TV", "Watch", "Phone"];
   var queryResultSet = [];
   var tempSearchStore = [];
-  TextEditingController searchcontroller= new TextEditingController();
+  TextEditingController searchcontroller = new TextEditingController();
 
   initiateSearch(value) async {
     if (value.length == 0) {
@@ -39,7 +39,6 @@ class _HomeState extends State<Home> {
       return;
     }
     if (search == false) {
-      // Chỉ đặt search=true 1 lần để hiển thị khu vực ListView
       setState(() {
         search = true;
       });
@@ -47,21 +46,15 @@ class _HomeState extends State<Home> {
     var capitalizedValue =
         value.substring(0, 1).toUpperCase() + value.substring(1);
     if (queryResultSet.isEmpty) {
-      // Lấy chữ cái đầu tiên để query
       String firstLetter = value.substring(0, 1).toUpperCase();
-
-      // Dùng 'await' để đợi database trả về KẾT QUẢ
       QuerySnapshot docs = await DatabaseMethods().search(firstLetter);
-
       for (int i = 0; i < docs.docs.length; i++) {
         queryResultSet.add(docs.docs[i].data());
       }
     }
 
-    // Sau khi đã 'await' (nếu cần), chúng ta tiến hành lọc
-    tempSearchStore = []; // Xóa kết quả cũ
+    tempSearchStore = [];
     queryResultSet.forEach((element) {
-      // Chú ý: Kiểm tra 'UpdateName' ở dưới
       if (element["UpdateName"].startsWith(capitalizedValue)) {
         tempSearchStore.add(element);
       }
@@ -79,6 +72,7 @@ class _HomeState extends State<Home> {
 
   ontheload() async {
     await getthesharedpredf();
+    CategoryStream =  DatabaseMethods().getAllProducts();
     setState(() {});
   }
 
@@ -95,323 +89,276 @@ class _HomeState extends State<Home> {
       body: name == null
           ? Center(child: CircularProgressIndicator())
           : Container(
-              margin: EdgeInsets.only(top: 50.0, left: 20.0, right: 20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Hey, " + name!,
-                            style: Appwidget.boldTextStyle(),
-                          ),
-                          Text(
-                            "Google morning",
-                            style: Appwidget.lightTextStyle(),
-                          ),
-                        ],
-                      ),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.network(
-                          image! ,
-                          height: 70,
-                          width: 70,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 30.0),
-                  Container(
-                    width: MediaQuery.of(context).size.width,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
+        margin: EdgeInsets.only(top: 50.0, left: 20.0, right: 20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Hey, " + name!,
+                      style: Appwidget.boldTextStyle(),
                     ),
-                    child: TextField(
-                      controller: searchcontroller,
-                      onChanged: (value) {
-                        initiateSearch(value.toUpperCase());
-                      },
-                      decoration: InputDecoration(
-                        border: InputBorder.none,
-                        hintText: "Search product",
-                        hintStyle: Appwidget.lightTextStyle(),
-                        prefixIcon: search
-                            ? GestureDetector(
-                            onTap: (){
-                              search=false;
-                              tempSearchStore=[];
-                              queryResultSet=[];
-                              searchcontroller.text="";
-                              setState(() {
-
-                              });
-                            },
-                            child: Icon(Icons.close))
-                            : Icon(Icons.search, color: Colors.black),
-                      ),
+                    Text(
+                      "Google morning",
+                      style: Appwidget.lightTextStyle(),
                     ),
+                  ],
+                ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.network(
+                    image!,
+                    height: 70,
+                    width: 70,
+                    fit: BoxFit.cover,
                   ),
-                  SizedBox(height: 20.0),
-                  search
-                      ? ListView(
-                          padding: EdgeInsets.only(left: 10.0, right: 10.0),
-                          primary: false,
-                          shrinkWrap: true,
-                          children: tempSearchStore.map((element) {
-                            return buildResultCard(element);
-                          }).toList(),
-                        )
-                      : Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "Categories",
-                                  style: Appwidget.semiboldTextStyle(),
-                                ),
-                                Text(
-                                  "See All",
-                                  style: TextStyle(
-                                    color: Color(0xFFfd6f3e),
-                                    fontSize: 18.0,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
+                ),
+              ],
+            ),
 
-                            Row(
-                              children: [
-                                Container(
-                                  margin: EdgeInsets.only(top: 20.0),
-                                  padding: EdgeInsets.all(20),
-                                  height: 130.0,
-                                  decoration: BoxDecoration(
-                                    color: Color(0xFFfd6f3e),
-                                    borderRadius: BorderRadius.circular(10.0),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      "All",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20.0,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Container(
-                                    margin: EdgeInsets.only(
-                                      top: 20.0,
-                                      left: 20.0,
-                                    ),
-                                    height: 130,
-                                    child: ListView.builder(
-                                      itemCount: categories.length,
-                                      scrollDirection: Axis.horizontal,
-                                      shrinkWrap: true,
-                                      itemBuilder: (context, index) {
-                                        return CategoryTile(
-                                          image: categories[index],
-                                          name: categoryName[index],
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 30.0),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "All Products",
-                                  style: Appwidget.semiboldTextStyle(),
-                                ),
-                                Text(
-                                  "See All",
-                                  style: TextStyle(
-                                    color: Color(0xFFfd6f3e),
-                                    fontSize: 18.0,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 20.0),
-                            Container(
-                              height: 240,
-                              child: ListView(
-                                shrinkWrap: true,
-                                scrollDirection: Axis.horizontal,
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(10.0),
-                                    ),
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 20.0,
-                                    ),
-                                    margin: EdgeInsets.only(right: 20.0),
-                                    child: Column(
-                                      children: [
-                                        Image.asset(
-                                          "images/headphone2.png",
-                                          height: 150,
-                                          width: 150,
-                                          fit: BoxFit.cover,
-                                        ),
-                                        Text(
-                                          "Headphone",
-                                          style: Appwidget.semiboldTextStyle(),
-                                        ),
-                                        SizedBox(height: 10),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "\$100",
-                                              style: TextStyle(
-                                                color: Color(0xFFfd6f3e),
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 22.0,
-                                              ),
-                                            ),
-                                            SizedBox(width: 40.0),
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                color: Color(0xFFfd6f3e),
-                                                borderRadius:
-                                                    BorderRadius.circular(5),
-                                              ),
-                                              child: Icon(
-                                                Icons.add,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(10.0),
-                                    ),
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 20.0,
-                                    ),
-                                    margin: EdgeInsets.only(right: 20.0),
-                                    child: Column(
-                                      children: [
-                                        Image.asset(
-                                          "images/watch2.png",
-                                          height: 150,
-                                          width: 150,
-                                          fit: BoxFit.cover,
-                                        ),
-                                        Text(
-                                          "Apple Watch",
-                                          style: Appwidget.semiboldTextStyle(),
-                                        ),
-                                        SizedBox(height: 10),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "\$50",
-                                              style: TextStyle(
-                                                color: Color(0xFFfd6f3e),
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 22.0,
-                                              ),
-                                            ),
-                                            SizedBox(width: 40.0),
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                color: Color(0xFFfd6f3e),
-                                                borderRadius:
-                                                    BorderRadius.circular(5),
-                                              ),
-                                              child: Icon(
-                                                Icons.add,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(10.0),
-                                    ),
+            SizedBox(height: 30.0),
 
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 20.0,
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Image.asset(
-                                          "images/laptop2.png",
-                                          height: 150,
-                                          width: 150,
-                                          fit: BoxFit.cover,
-                                        ),
-                                        Text(
-                                          "Laptop",
-                                          style: Appwidget.semiboldTextStyle(),
-                                        ),
-                                        SizedBox(height: 10),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "\$1000",
-                                              style: TextStyle(
-                                                color: Color(0xFFfd6f3e),
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 22.0,
-                                              ),
-                                            ),
-                                            SizedBox(width: 40.0),
-                                            Container(
-                                              decoration: BoxDecoration(
-                                                color: Color(0xFFfd6f3e),
-                                                borderRadius:
-                                                    BorderRadius.circular(5),
-                                              ),
-                                              child: Icon(
-                                                Icons.add,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                ],
+            // Search box
+            Container(
+              width: MediaQuery.of(context).size.width,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: TextField(
+                controller: searchcontroller,
+                onChanged: (value) {
+                  initiateSearch(value.toUpperCase());
+                },
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  hintText: "Search product",
+                  hintStyle: Appwidget.lightTextStyle(),
+                  prefixIcon: search
+                      ? GestureDetector(
+                    onTap: () {
+                      search = false;
+                      tempSearchStore = [];
+                      queryResultSet = [];
+                      searchcontroller.text = "";
+                      setState(() {});
+                    },
+                    child: Icon(Icons.close),
+                  )
+                      : Icon(Icons.search, color: Colors.black),
+                ),
               ),
             ),
+
+            SizedBox(height: 20.0),
+
+            // Search result
+            search
+                ? ListView(
+              padding:
+              EdgeInsets.only(left: 10.0, right: 10.0),
+              primary: false,
+              shrinkWrap: true,
+              children: tempSearchStore
+                  .map((element) => buildResultCard(element))
+                  .toList(),
+            )
+                : Column(
+              children: [
+                // Categories header
+                Row(
+                  mainAxisAlignment:
+                  MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Categories",
+                      style: Appwidget.semiboldTextStyle(),
+                    ),
+                    Text(
+                      "See All",
+                      style: TextStyle(
+                        color: Color(0xFFfd6f3e),
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Category tiles
+                Row(
+                  children: [
+                    Container(
+                      margin: EdgeInsets.only(top: 20.0),
+                      padding: EdgeInsets.all(20),
+                      height: 130.0,
+                      decoration: BoxDecoration(
+                        color: Color(0xFFfd6f3e),
+                        borderRadius:
+                        BorderRadius.circular(10.0),
+                      ),
+                      child: Center(
+                        child: Text(
+                          "All",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20.0,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        margin: EdgeInsets.only(
+                          top: 20.0,
+                          left: 20.0,
+                        ),
+                        height: 130,
+                        child: ListView.builder(
+                          itemCount: categories.length,
+                          scrollDirection: Axis.horizontal,
+                          shrinkWrap: true,
+                          itemBuilder: (context, index) {
+                            return CategoryTile(
+                              image: categories[index],
+                              name: categoryName[index],
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 30.0),
+
+                // All Products
+                Row(
+                  mainAxisAlignment:
+                  MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "All Products",
+                      style: Appwidget.semiboldTextStyle(),
+                    ),
+                    Text(
+                      "See All",
+                      style: TextStyle(
+                        color: Color(0xFFfd6f3e),
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 20.0),
+
+                Container(
+                  height: 260,
+                  child: StreamBuilder(
+                    stream: CategoryStream,
+                    builder: (context, AsyncSnapshot snapshot) {
+                      if (snapshot.hasData) {
+                        return ListView.builder(
+                          itemCount: snapshot.data.docs.length,
+                          shrinkWrap: true,
+                          scrollDirection: Axis.horizontal,
+                          itemBuilder: (context, index) {
+                            DocumentSnapshot ds =
+                            snapshot.data.docs[index];
+                            Map<String, dynamic> data =
+                            ds.data()
+                            as Map<String, dynamic>;
+                            String name = data["Name"];
+                            String image = data["Image"];
+                            String price = data["Price"];
+                            String detail = data["Detail"];
+                            return GestureDetector(
+                              onTap: (){
+                                Navigator.push(context, MaterialPageRoute(builder: (context)=>ProductDeTail(name: name, image: image, detail: detail, price: price)));
+                              },
+                              child: Container(
+                                width: 250.0,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius:
+                                  BorderRadius.circular(10.0),
+                                ),
+                                padding: EdgeInsets.all(
+                                   10.0,
+                                ),
+                                margin: EdgeInsets.only(
+                                    right: 20.0),
+                                child: Column(
+                                  children: [
+                                    Image.network(
+                                      image,
+                                      height: 150,
+                                      width: 150,
+                                      fit: BoxFit.cover,
+                                    ),
+                                    Text(
+                                      name,
+                                      style: Appwidget
+                                          .semiboldTextStyle(), maxLines:  1, overflow:  TextOverflow.ellipsis,
+                                    ),
+                                    SizedBox(height: 20),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          price,
+                                          style: TextStyle(
+                                            color:
+                                            Color(0xFFfd6f3e),
+                                            fontWeight:
+                                            FontWeight.bold,
+                                            fontSize: 22.0,
+                                          ),maxLines:  1, overflow:  TextOverflow.ellipsis
+                                        ),
+                                        SizedBox(width: 30.0),
+                                        Container(
+                                          decoration:
+                                          BoxDecoration(
+                                            color:
+                                            Color(0xFFfd6f3e),
+                                            borderRadius:
+                                            BorderRadius
+                                                .circular(5),
+                                          ),
+                                          child: Icon(
+                                            Icons.add,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text("Đã xảy ra lỗi!"));
+                      } else {
+                        return Center(child: CircularProgressIndicator());
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
