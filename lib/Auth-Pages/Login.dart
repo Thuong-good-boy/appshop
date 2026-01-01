@@ -1,10 +1,13 @@
 import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shopnew/Auth-Pages/ForgotPassword.dart';
 import 'package:shopnew/Auth-Pages/SignUp.dart';
 import 'package:shopnew/pages/bottomNar.dart';
+import 'package:shopnew/services/database.dart';
+import 'package:shopnew/services/share_pref.dart';
 import 'package:shopnew/widget/support_widget.dart';
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -88,7 +91,18 @@ class _LoginState extends State<Login> {
                             String  email= emailcontroller.text;
                             String  password= passwordcontroller.text;
                           try{
-                            await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+                            UserCredential user= await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+                            if(user.user !=null){
+                              await Share_pref().saveUserEmail(user.user!.email!);
+                              await Share_pref().saveUserId(user.user!.uid);
+                              DocumentSnapshot userDoc= await DatabaseMethods().getUserbyUid(user.user!.uid);
+                              if(userDoc.exists){
+                                String name = userDoc.get("Name");
+                                String image = userDoc.get("Image");
+                                await Share_pref().saveUserName(name);
+                                await Share_pref().saveUserImage(image);
+                              }
+                            }
 
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                               backgroundColor: Colors.greenAccent,

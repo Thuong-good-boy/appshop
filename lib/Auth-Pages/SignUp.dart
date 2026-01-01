@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:random_string/random_string.dart';
 import 'package:shopnew/Auth-Pages/Login.dart';
 import 'package:shopnew/pages/bottomNar.dart';
+import 'package:shopnew/services/EmailService.dart';
 import 'package:shopnew/services/database.dart';
 import 'package:shopnew/services/share_pref.dart';
 import 'package:shopnew/widget/support_widget.dart';
+// 1. Import Service gửi mail
 
 class SignUp extends StatefulWidget {
   const SignUp({super.key});
@@ -97,7 +99,7 @@ class _SignInState extends State<SignUp> {
                   ),
                 ),
                 SizedBox(height: 20.0),
-                Text("mật khẩu", style: Appwidget.semiboldTextStyle()),
+                Text("Mật khẩu", style: Appwidget.semiboldTextStyle()),
                 SizedBox(height: 20.0),
                 Container(
                   padding: EdgeInsets.only(left: 20.0),
@@ -132,13 +134,11 @@ class _SignInState extends State<SignUp> {
                   child: TextFormField(
                     obscureText: true,
                     validator: (value) {
-                      if (passwordcontroller.text == null || passwordcontroller.text.isEmpty) {
-                        return "Xin hãy nhập mật khẩu của bạn";
-                      }else{
-                        if(passwordcontroller.text !=value){
-                            return "Mật khẩu xác nhận không khớp.";
-
-                        }
+                      if (value == null || value.isEmpty) {
+                        return "Xin hãy nhập mật khẩu xác nhận";
+                      }
+                      if (passwordcontroller.text != value) {
+                        return "Mật khẩu xác nhận không khớp.";
                       }
                       return null;
                     },
@@ -154,85 +154,89 @@ class _SignInState extends State<SignUp> {
                     onPressed: _isLoading
                         ? null
                         : () async {
-                            if (_formkey.currentState!.validate()) {
+                      if (_formkey.currentState!.validate()) {
+                        setState(() {
+                          _isLoading = true;
+                        });
+                        String name = namecontroller.text;
+                        String email = emailcontroller.text;
+                        String password = passwordcontroller.text;
+                        try {
+                          UserCredential user = await FirebaseAuth
+                              .instance
+                              .createUserWithEmailAndPassword(
+                            email: email,
+                            password: password,
+                          );
+                          String uid = user.user!.uid;
+                          String avata =
+                              "https://ui-avatars.com/api/?name=${name}&background=random&format=png";
 
-                              setState(() {
-                                _isLoading = true;
-                              });
-                              String name = namecontroller.text;
-                              String email = emailcontroller.text;
-                              String password = passwordcontroller.text;
-                              try {
-                                UserCredential user = await FirebaseAuth
-                                    .instance
-                                    .createUserWithEmailAndPassword(
-                                      email: email!,
-                                      password: password!,
-                                    );
-                                String uid = user.user!.uid;
-                                String avata =
-                                    "https://ui-avatars.com/api/?name=${name}&background=random&format=png";
-                                await Share_pref().saveUserId(uid);
-                                await Share_pref().saveUserName(
-                                  namecontroller.text,
-                                );
-                                await Share_pref().saveUserEmail(
-                                  emailcontroller.text,
-                                );
-                                await Share_pref().saveUserImage(avata);
-                                Map<String, dynamic> userInfoMap = {
-                                  "ID": uid,
-                                  "Name": namecontroller.text,
-                                  "Email": emailcontroller.text,
-                                  "Image": avata,
-                                };
-                                await DatabaseMethods().addUserDetails(
-                                  userInfoMap,
-                                  uid,
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    backgroundColor: Colors.green,
-                                    content: Text(
-                                      "đăng ký thành công! ",
-                                      style: TextStyle(fontSize: 15.0),
-                                    ),
-                                  ),
-                                );
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => BottomNav(),
-                                  ),
-                                );
-                              } on FirebaseException catch (e) {
-                                String errorMessage = "Đã có lỗi xảy ra.";
-                                if (e.code == "weak-password") {
-                                  errorMessage =
-                                      'Mật khẩu quá yếu, vui lòng nhập ít nhất 6 ký tự.';
-                                } else if (e.code == "email-already-in-use") {
-                                  errorMessage =
-                                      'Email này đã được sử dụng bởi một tài khoản khác.';
-                                } else if (e.code == 'invalid-email') {
-                                  errorMessage =
-                                      'Định dạng email không hợp lệ.';
-                                }
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    backgroundColor: Colors.redAccent,
-                                    content: Text(
-                                      errorMessage,
-                                      style: TextStyle(fontSize: 15.0),
-                                    ),
-                                  ),
-                                );
-                              } finally {
-                                setState(() {
-                                  _isLoading = false;
-                                });
-                              }
-                            }
-                          },
+                          await Share_pref().saveUserId(uid);
+                          await Share_pref().saveUserName(name);
+                          await Share_pref().saveUserEmail(email);
+                          await Share_pref().saveUserImage(avata);
+
+                          Map<String, dynamic> userInfoMap = {
+                            "ID": uid,
+                            "Name": name,
+                            "Email": email,
+                            "Image": avata,
+                          };
+
+                          await DatabaseMethods().addUserDetails(
+                            userInfoMap,
+                            uid,
+                          );
+
+                          EmailService.sendRegistrationSuccess(email, name);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              backgroundColor: Colors.green,
+                              content: Text(
+                                "Đăng ký thành công! Đã gửi mail chào mừng.",
+                                style: TextStyle(fontSize: 15.0),
+                              ),
+                            ),
+                          );
+
+                          Navigator.pushReplacement( // Dùng pushReplacement để không quay lại trang đăng ký
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BottomNav(),
+                            ),
+                          );
+                        } on FirebaseException catch (e) {
+                          String errorMessage = "Đã có lỗi xảy ra.";
+                          if (e.code == "weak-password") {
+                            errorMessage =
+                            'Mật khẩu quá yếu, vui lòng nhập ít nhất 6 ký tự.';
+                          } else if (e.code == "email-already-in-use") {
+                            errorMessage =
+                            'Email này đã được sử dụng bởi một tài khoản khác.';
+                          } else if (e.code == 'invalid-email') {
+                            errorMessage =
+                            'Định dạng email không hợp lệ.';
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              backgroundColor: Colors.redAccent,
+                              content: Text(
+                                errorMessage,
+                                style: TextStyle(fontSize: 15.0),
+                              ),
+                            ),
+                          );
+                        } finally {
+                          if (mounted) {
+                            setState(() {
+                              _isLoading = false;
+                            });
+                          }
+                        }
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       minimumSize: Size(
@@ -242,19 +246,18 @@ class _SignInState extends State<SignUp> {
                     ),
                     child: _isLoading
                         ? CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation(Colors.green),
-                          )
+                      valueColor: AlwaysStoppedAnimation(Colors.white), // Đổi màu loading thành trắng cho dễ nhìn
+                    )
                         : Text(
-                            "Đăng ký",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                      "Đăng ký",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
                 SizedBox(height: 20.0),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

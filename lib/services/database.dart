@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:shopnew/pages/Address.dart';
 
 class DatabaseMethods {
   Future addUserDetails(Map<String, dynamic> userInfoMap, String id) async {
@@ -7,7 +9,12 @@ class DatabaseMethods {
         .doc(id)
         .set(userInfoMap);
   }
-
+  Future<DocumentSnapshot> getUserbyUid(String uid) async {
+    return FirebaseFirestore.instance
+        .collection("users")
+        .doc(uid)
+        .get();
+  }
   Future addProduct(
     Map<String, dynamic> userInfoMap,
     String categoryname,
@@ -22,9 +29,19 @@ class DatabaseMethods {
         .collection("Products")
         .add(userInfoMap);
   }
+  Future <void> deleteAddress(String docId) async{
+    await FirebaseFirestore.instance.collection("Address").doc(docId).delete();
+}
 
-  Future<Stream<QuerySnapshot>> getProducts(String category) async {
-    return await FirebaseFirestore.instance.collection(category).snapshots();
+  Stream<QuerySnapshot> getProducts(String category)  {
+    return  FirebaseFirestore.instance.collection(category).snapshots();
+  }
+  Stream<QuerySnapshot> getListAddress(String email) {
+    return FirebaseFirestore.instance.collection("Address").where("Email",isEqualTo: email).snapshots();
+  }
+  Stream<QuerySnapshot> getAddress (String email) {
+   return  FirebaseFirestore.instance.collection("Address").where("Email",isEqualTo: email).limit(1).snapshots();
+
   }
   Stream<QuerySnapshot> getAllProducts() {
     return FirebaseFirestore.instance.collection("Products").snapshots();
@@ -44,12 +61,57 @@ class DatabaseMethods {
         .snapshots();
   }
 
-  Future orderDetails(Map<String, dynamic> userInfoMap) async {
+  Future orderDetails(Map<String, dynamic> orderInfoMap) async {
     return await FirebaseFirestore.instance
         .collection("Orders")
-        .add(userInfoMap);
+        .add(orderInfoMap);
   }
 
+  Future<void> addProductToCart(String email, Map<String, dynamic> productInfoMap) async {
+    String productId = productInfoMap["ProductId"];
+    int quantityToAdd = productInfoMap["Count"] ?? 1;
+    CollectionReference cartRef = FirebaseFirestore.instance
+        .collection("Shoppings")
+        .doc(email)
+        .collection("Shopping");
+
+    // 1. KIỂM TRA xem sản phẩm đã có trong giỏ chưa
+    QuerySnapshot query = await cartRef
+        .where("ProductId", isEqualTo: productId)
+        .limit(1)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      // 2. NẾU CÓ: Cập nhật (cộng dồn) số lượng
+      DocumentSnapshot doc = query.docs.first;
+      await doc.reference.update({
+        "Count": FieldValue.increment(quantityToAdd)
+      });
+    } else {
+      // 3. NẾU CHƯA CÓ: Thêm mới
+      // Đảm bảo map có đủ thông tin
+      await cartRef.add(productInfoMap);
+    }
+  }
+
+  Stream<QuerySnapshot> getShopping(String email)  {
+    return FirebaseFirestore.instance
+        .collection("Shoppings")
+        .doc(email).collection("Shopping")
+        .snapshots();
+  }
+  Future<void> updateShopping(String email,String docId, Map<String, dynamic> data) async{
+    return  FirebaseFirestore.instance
+        .collection("Shoppings")
+        .doc(email).collection("Shopping").doc(docId).update(data);
+  }
+  Future<void> deleteShopping(String email,String docId) async{
+    return await FirebaseFirestore.instance.collection("Shoppings").doc(email).collection("Shopping").doc(docId).delete();
+  }
+
+  Future Address(Map<String,dynamic> addressInfoMap) async{
+    return await FirebaseFirestore.instance.collection("Address").add(addressInfoMap);
+  }
   upDateStatus(String id) async {
     return await FirebaseFirestore.instance.collection("Orders").doc(id).update(
       {"Status": "Đã giao"},
@@ -65,4 +127,10 @@ class DatabaseMethods {
         )
         .get();
   }
+  Future<void> deleteOrder(String id) async {
+    return await FirebaseFirestore.instance.collection("Orders").doc(id).delete();
+  }
+
+
+
 }

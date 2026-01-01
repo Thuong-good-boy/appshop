@@ -44,6 +44,12 @@ dependencies:
   cloudinary_public: ^0.23.1
   flutter_stripe: ^12.0.2
   http: ^1.5.0
+  intl: ^0.20.2
+  mailer: ^6.0.0
+  google_generative_ai: ^0.4.0
+  flutter_markdown: ^0.6.14
+  fl_chart: ^0.66.0  # Thư viện vẽ biểu đồ
+
 
 dev_dependencies:
   flutter_test:
