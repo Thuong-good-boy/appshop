@@ -310,18 +310,29 @@ class _ProductDeTailState extends State<ProductDeTail> {
   displayPaymentSheet() async {
     try {
       await Stripe.instance.presentPaymentSheet().then((value) async {
+
+        // --- SỬA ĐOẠN NÀY: CHUẨN HÓA DỮ LIỆU VỀ DẠNG DANH SÁCH ---
         Map<String, dynamic> orderInfoMap = {
-          "Product": widget.name,
-          "Price": widget.price,
-          "Name": name,
           "Email": email,
-          "Image": image,
-          "ProductImage": widget.image,
-          "Status": "Đang vận chuyển.",
-          "OrderDate": DateTime.now(),
+          "Name": name, // Tên người mua
+          "Image": image, // Avatar người mua
+          "Status": "Đang vận chuyển",
+          "OrderTimestamp": DateTime.now(), // Dùng Timestamp để sort cho dễ
+          "Total": widget.price, // Lưu tổng tiền
+          "Products": [
+            {
+              "Name": widget.name,
+              "Image": widget.image, // Ảnh sản phẩm
+              "Price": widget.price,
+              "Count": 1
+            }
+          ]
         };
+        // -----------------------------------------------------------
+
         await DatabaseMethods().orderDetails(orderInfoMap);
 
+        // ... (Phần gửi mail giữ nguyên) ...
         if (email != null && name != null) {
           await EmailService.sendOrderConfirmation(
             userEmail: email!,

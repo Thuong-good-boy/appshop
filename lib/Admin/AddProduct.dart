@@ -3,7 +3,7 @@ import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shopnew/services/database.dart';
-import 'package:shopnew/widget/support_widget.dart';
+// import 'package:shopnew/widget/support_widget.dart'; // Nếu bạn muốn dùng style cũ thì mở lại, mình đang dùng style mới trực tiếp
 
 class AddProduct extends StatefulWidget {
   const AddProduct({super.key});
@@ -15,15 +15,21 @@ class AddProduct extends StatefulWidget {
 class _AddProductState extends State<AddProduct> {
   final ImagePicker _picker = ImagePicker();
   File? selectedImage;
-  TextEditingController namecontroller = new TextEditingController();
-  TextEditingController pricecontroller = new TextEditingController();
-  TextEditingController detailcontroller = new TextEditingController();
+  TextEditingController namecontroller = TextEditingController();
+  TextEditingController pricecontroller = TextEditingController();
+  TextEditingController detailcontroller = TextEditingController();
 
   bool _isLoading = false;
+  String? value;
+  final List<String> categoryitem = [
+    'Watch', "Laptop", "TV", "Headphone", "Phone",
+  ];
+
+  // Màu chủ đạo (bạn có thể thay đổi theo ý thích)
+  final Color primaryColor = const Color(0xFFfd6f3e);
 
   Future<void> getImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-
     if (image != null) {
       setState(() {
         selectedImage = File(image.path);
@@ -32,9 +38,7 @@ class _AddProductState extends State<AddProduct> {
   }
 
   Future<void> uploadItem() async {
-    if (selectedImage != null &&
-        namecontroller.text.isNotEmpty &&
-        value != null) {
+    if (selectedImage != null && namecontroller.text.isNotEmpty && value != null) {
       setState(() {
         _isLoading = true;
       });
@@ -65,28 +69,43 @@ class _AddProductState extends State<AddProduct> {
 
         await DatabaseMethods().addProduct(addProduct, value!);
         await DatabaseMethods().addAllProducts(addProduct);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.green,
-            content: Text("Sản phẩm đã được thêm thành công"),
-          ),
-        );
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Colors.green,
+              content: Text("Sản phẩm đã được thêm thành công"),
+            ),
+          );
+          // Reset form sau khi thành công (tùy chọn)
+          namecontroller.clear();
+          pricecontroller.clear();
+          detailcontroller.clear();
+          setState(() {
+            selectedImage = null;
+            value = null;
+          });
+        }
       } catch (e) {
         print(e.toString());
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            backgroundColor: Colors.redAccent,
-            content: Text("Thêm sản phẩm thất bại"),
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              backgroundColor: Colors.redAccent,
+              content: Text("Thêm sản phẩm thất bại"),
+            ),
+          );
+        }
       } finally {
-        setState(() {
-          _isLoading = false; // Tắt loading dù thành công hay thất bại
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           backgroundColor: Colors.orange,
           content: Text("Vui lòng điền đầy đủ thông tin và chọn ảnh"),
         ),
@@ -94,191 +113,169 @@ class _AddProductState extends State<AddProduct> {
     }
   }
 
-  String? value;
-  final List<String> categoryitem = [
-    'Watch',
-    "Laptop",
-    "TV",
-    "Headphone",
-    "Phone",
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
         leading: GestureDetector(
-          onTap: () {
-            Navigator.pop(context);
-          },
-          child: Icon(Icons.arrow_back_ios_new_outlined),
+          onTap: () => Navigator.pop(context),
+          child: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black),
         ),
-        title: Container(
-          margin: EdgeInsets.only(left: 30.0),
-          child: Text("Thêm sản phẩm", style: Appwidget.boldTextStyle()),
+        title: const Text("Thêm sản phẩm",
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 22)
         ),
+        centerTitle: true,
       ),
+      // SingleChildScrollView giúp cuộn khi bàn phím hiện lên -> Hết lỗi overflow
       body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: Container(
-          margin: EdgeInsets.only(right: 20.0, left: 20.0, bottom: 20.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                child: Text(
-                  "Cập nhật ảnh sản phẩm",
-                  style: Appwidget.lightTextStyle(),
-                ),
-              ),
-              SizedBox(height: 30.0),
-              GestureDetector(
-                onTap: () {
-                  getImage();
-                },
-                child: Center(
+              // --- Phần chọn ảnh ---
+              Center(
+                child: GestureDetector(
+                  onTap: getImage,
                   child: Container(
-                    width: 150.0,
-                    height: 150.0,
+                    width: 150,
+                    height: 150,
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black, width: 1.5),
+                      color: Colors.grey[100],
+                      border: Border.all(color: selectedImage != null ? primaryColor : Colors.grey.shade300, width: 2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: selectedImage != null
                         ? ClipRRect(
-                            borderRadius: BorderRadius.circular(20.0),
-                            child: Image.file(
-                              selectedImage!,
-                              fit: BoxFit.cover,
-                            ),
-                          )
-                        : Icon(Icons.camera_alt_outlined),
+                      borderRadius: BorderRadius.circular(18),
+                      child: Image.file(selectedImage!, fit: BoxFit.cover),
+                    )
+                        : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.camera_alt_rounded, color: Colors.grey[400], size: 40),
+                        const SizedBox(height: 8),
+                        Text("Chọn ảnh", style: TextStyle(color: Colors.grey[600]))
+                      ],
+                    ),
                   ),
                 ),
               ),
-              SizedBox(height: 30.0),
-              Container(
-                child: Text("Tên sản phẩm", style: Appwidget.lightTextStyle()),
-              ),
-              SizedBox(height: 10.0),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                width: MediaQuery.of(context).size.width,
-                decoration: BoxDecoration(
-                  color: Color(0xFFececf8),
-                  borderRadius: BorderRadius.circular(15.0),
-                ),
-                child: TextField(
+              const SizedBox(height: 30),
+
+              // --- Các ô nhập liệu ---
+              _buildTextField(
                   controller: namecontroller,
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hint: Text(
-                      "Tên sản phẩm",
-                      style: TextStyle(fontSize: 15.0, color: Colors.grey),
-                    ),
-                  ),
-                ),
+                  label: "Tên sản phẩm",
+                  icon: Icons.shopping_bag_outlined
               ),
-              SizedBox(height: 30.0),
-              Container(
-                child: Text("Giá sản phẩm", style: Appwidget.lightTextStyle()),
-              ),
-              SizedBox(height: 10.0),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                width: MediaQuery.of(context).size.width,
-                decoration: BoxDecoration(
-                  color: Color(0xFFececf8),
-                  borderRadius: BorderRadius.circular(15.0),
-                ),
-                child: TextField(
+              const SizedBox(height: 20),
+
+              _buildTextField(
                   controller: pricecontroller,
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hint: Text(
-                      "Giá sản phẩm",
-                      style: TextStyle(fontSize: 15.0, color: Colors.grey),
-                    ),
-                  ),
-                ),
+                  label: "Giá sản phẩm",
+                  icon: Icons.attach_money,
+                  inputType: TextInputType.number // Bàn phím số cho giá tiền
               ),
-              SizedBox(height: 30.0),
-              Container(
-                child: Text(
-                  "Mô tả sản phẩm",
-                  style: Appwidget.lightTextStyle(),
-                ),
-              ),
-              SizedBox(height: 10.0),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                width: MediaQuery.of(context).size.width,
-                decoration: BoxDecoration(
-                  color: Color(0xFFececf8),
-                  borderRadius: BorderRadius.circular(15.0),
-                ),
-                child: TextField(
-                  maxLines: 6,
+              const SizedBox(height: 20),
+
+              _buildTextField(
                   controller: detailcontroller,
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hint: Text(
-                      "Mô tả sản phẩm",
-                      style: TextStyle(fontSize: 15.0, color: Colors.grey),
-                    ),
-                  ),
-                ),
+                  label: "Mô tả chi tiết",
+                  icon: Icons.description_outlined,
+                  maxLines: 4
               ),
-              SizedBox(height: 20.0),
-              Text("Danh mục sản phẩm", style: Appwidget.lightTextStyle()),
-              SizedBox(height: 20.0),
+              const SizedBox(height: 20),
+
+              // --- Dropdown Danh mục ---
+              Text("Danh mục", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.black87)),
+              const SizedBox(height: 10),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 10.0),
-                width: MediaQuery.of(context).size.width,
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
                 decoration: BoxDecoration(
-                  color: Color(0xFFececf8),
-                  borderRadius: BorderRadius.circular(15.0),
+                  color: const Color(0xFFececf8),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    isExpanded: true,
-                    // Giúp dropdown chiếm hết chiều rộng
-                    items: categoryitem
-                        .map(
-                          (item) => DropdownMenuItem(
-                            value: item,
-                            child: Text(
-                              item,
-                              style: Appwidget.semiboldTextStyle(),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) => {
-                      setState(() {
-                        this.value = value;
-                      }),
-                    },
-                    dropdownColor: Colors.white,
-                    hint: Text("Danh mục"),
-                    iconSize: 36,
-                    icon: Icon(Icons.arrow_drop_down, color: Colors.black),
                     value: value,
+                    isExpanded: true,
+                    hint: const Text("Chọn loại sản phẩm"),
+                    icon: const Icon(Icons.arrow_drop_down_circle_outlined, color: Colors.grey),
+                    items: categoryitem.map((item) => DropdownMenuItem(
+                      value: item,
+                      child: Text(item, style: const TextStyle(fontWeight: FontWeight.w500)),
+                    )).toList(),
+                    onChanged: (val) => setState(() => value = val),
                   ),
                 ),
               ),
-              SizedBox(height: 40.0),
-              Center(
+
+              const SizedBox(height: 40),
+
+              // --- Nút Submit ---
+              SizedBox(
+                width: double.infinity,
+                height: 55,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : uploadItem,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    elevation: 5,
+                  ),
                   child: _isLoading
-                      ? CircularProgressIndicator(color: Colors.white)
-                      : Text("Thêm danh mục", style: TextStyle(fontSize: 22.0)),
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                    "Thêm Ngay",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
                 ),
               ),
+              const SizedBox(height: 20), // Padding bottom để không sát mép
             ],
           ),
         ),
       ),
+    );
+  }
+
+  // Widget con giúp code gọn hơn và đẹp hơn
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType inputType = TextInputType.text,
+    int maxLines = 1,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.black87)),
+        const SizedBox(height: 10),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFececf8),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: TextField(
+            controller: controller,
+            keyboardType: inputType,
+            maxLines: maxLines,
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              prefixIcon: Icon(icon, color: Colors.grey),
+              hintText: "Nhập $label...",
+              hintStyle: TextStyle(color: Colors.grey.withOpacity(0.8)),
+              contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
