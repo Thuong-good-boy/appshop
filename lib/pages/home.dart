@@ -1,11 +1,13 @@
 import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // Import Provider
 import 'package:shopnew/pages/ChatbotPage.dart';
 import 'package:shopnew/pages/ProductDeTail.dart';
 import 'package:shopnew/pages/category_products.dart';
 import 'package:shopnew/services/database.dart';
 import 'package:shopnew/services/share_pref.dart';
+import 'package:shopnew/services/theme_provider.dart'; // Đảm bảo đường dẫn đúng
 import 'package:shopnew/widget/support_widget.dart';
 
 class Home extends StatefulWidget {
@@ -18,6 +20,8 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   Stream? CategoryStream;
   bool search = false;
+
+  // Danh sách danh mục
   List categories = [
     "images/headphone_icon.png",
     "images/laptop.png",
@@ -26,11 +30,14 @@ class _HomeState extends State<Home> {
     "images/iphone.png",
   ];
   List categoryName = ["Headphone", "Laptop", "TV", "Watch", "Phone"];
+
   var queryResultSet = [];
   var tempSearchStore = [];
-  TextEditingController searchcontroller = new TextEditingController();
+  TextEditingController searchcontroller = TextEditingController();
 
-  // --- ĐÃ SỬA LẠI HÀM NÀY ĐỂ LẤY ĐƯỢC ID ---
+  String? name, image;
+
+  // --- Logic Tìm kiếm ---
   initiateSearch(value) async {
     if (value.length == 0) {
       setState(() {
@@ -52,9 +59,8 @@ class _HomeState extends State<Home> {
       String firstLetter = value.substring(0, 1).toUpperCase();
       QuerySnapshot docs = await DatabaseMethods().search(firstLetter);
       for (int i = 0; i < docs.docs.length; i++) {
-        // SỬA: Lấy data ra map, sau đó nhét thêm ID vào
         Map<String, dynamic> data = docs.docs[i].data() as Map<String, dynamic>;
-        data["Id"] = docs.docs[i].id; // Lấy ID document gán vào map
+        data["Id"] = docs.docs[i].id; // Lấy ID document
         queryResultSet.add(data);
       }
     }
@@ -67,8 +73,6 @@ class _HomeState extends State<Home> {
     });
     setState(() {});
   }
-
-  String? name, image;
 
   getthesharedpredf() async {
     name = await Share_pref().getUserName();
@@ -90,325 +94,383 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    // --- Lấy Theme ---
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
+    // Màu sắc động
+    final Color bgColor = Theme.of(context).scaffoldBackgroundColor;
+    final Color cardColor = isDark ? Color(0xFF1E1E1E) : Colors.white;
+    final Color textColor = isDark ? Colors.white : Colors.black;
+    final Color subTextColor = isDark ? Colors.white70 : Colors.black54;
+
     return Scaffold(
-      backgroundColor: Color(0xfff2f2f2),
+      backgroundColor: bgColor,
+      // --- Nút Chatbot ---
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Chuyển sang trang Chatbot khi bấm nút
           Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => ChatbotPage())
-          );
+              context, MaterialPageRoute(builder: (context) => ChatbotPage()));
         },
-        backgroundColor: Color(0xFFfd6f3e), // Màu cam chủ đạo của app
-        child: Icon(Icons.support_agent_rounded, color: Colors.white, size: 30), // Icon Robot/Hỗ trợ
-        elevation: 5.0, // Độ nổi (đổ bóng)
+        backgroundColor: Color(0xFFfd6f3e),
+        elevation: 10.0,
+        shape: CircleBorder(), // Bo tròn hoàn toàn
+        child: Icon(Icons.support_agent_rounded, color: Colors.white, size: 30),
       ),
-      body: SingleChildScrollView(
-        child: name == null
-            ? Container(
-            height: MediaQuery.of(context).size.height,
-            child: Center(child: CircularProgressIndicator()))
-            : Container(
-          margin: EdgeInsets.only(top: 50.0, left: 20.0, right: 20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Hey, " + name!,
-                        style: Appwidget.boldTextStyle(),
+
+      body: SafeArea( // Tránh tai thỏ
+        child: SingleChildScrollView(
+          child: name == null
+              ? Container(
+              height: MediaQuery.of(context).size.height,
+              child: Center(child: CircularProgressIndicator(color: Colors.orange)))
+              : Container(
+            margin: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // --- Header (Avatar + Hello) ---
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Xin chào, " + name!,
+                          style: Appwidget.boldTextStyle().copyWith(
+                            color: textColor,
+                            fontSize: 20,
+                          ),
+                        ),
+                        Text(
+                          "Chúc bạn một ngày tốt lành!",
+                          style: Appwidget.lightTextStyle().copyWith(
+                            color: subTextColor,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.orange, width: 2),
                       ),
-                      Text(
-                        "Good morning", // Sửa typo Google -> Good
-                        style: Appwidget.lightTextStyle(),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(50),
+                        child: Image.network(
+                          image!,
+                          height: 60,
+                          width: 60,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Icon(Icons.person, size: 60, color: subTextColor),
+                        ),
                       ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 30.0),
+
+                // --- Search Box ---
+                Container(
+                  width: MediaQuery.of(context).size.width,
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 10,
+                        offset: Offset(0, 5),
+                      )
                     ],
                   ),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: Image.network(
-                      image!,
-                      height: 70,
-                      width: 70,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Icon(Icons.person, size: 70), // Xử lý nếu ảnh lỗi
+                  child: TextField(
+                    controller: searchcontroller,
+                    style: TextStyle(color: textColor), // Màu chữ nhập vào
+                    onChanged: (value) {
+                      initiateSearch(value.toUpperCase());
+                    },
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      hintText: "Tìm kiếm sản phẩm...",
+                      hintStyle: TextStyle(color: subTextColor),
+                      prefixIcon: Icon(Icons.search, color: subTextColor),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                      suffixIcon: search
+                          ? GestureDetector(
+                        onTap: () {
+                          search = false;
+                          tempSearchStore = [];
+                          queryResultSet = [];
+                          searchcontroller.text = "";
+                          setState(() {});
+                        },
+                        child: Icon(Icons.close, color: subTextColor),
+                      )
+                          : null,
                     ),
                   ),
-                ],
-              ),
-
-              SizedBox(height: 30.0),
-
-              // Search box
-              Container(
-                width: MediaQuery.of(context).size.width,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: TextField(
-                  controller: searchcontroller,
-                  onChanged: (value) {
-                    initiateSearch(value.toUpperCase());
+                SizedBox(height: 20.0),
+
+                // --- Search Results Logic ---
+                search
+                    ? ListView.builder(
+                  padding: EdgeInsets.zero,
+                  primary: false,
+                  shrinkWrap: true,
+                  itemCount: tempSearchStore.length,
+                  itemBuilder: (context, index) {
+                    return buildResultCard(
+                        tempSearchStore[index], cardColor, textColor);
                   },
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    hintText: "Search product",
-                    hintStyle: Appwidget.lightTextStyle(),
-                    prefixIcon: search
-                        ? GestureDetector(
-                      onTap: () {
-                        search = false;
-                        tempSearchStore = [];
-                        queryResultSet = [];
-                        searchcontroller.text = "";
-                        setState(() {});
-                      },
-                      child: Icon(Icons.close),
-                    )
-                        : Icon(Icons.search, color: Colors.black),
-                  ),
-                ),
-              ),
-
-              SizedBox(height: 20.0),
-
-              // Search result logic
-              search
-                  ? ListView(
-                padding: EdgeInsets.only(left: 10.0, right: 10.0),
-                primary: false,
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(), // Để scroll theo trang chính
-                children: tempSearchStore
-                    .map((element) => buildResultCard(element))
-                    .toList(),
-              )
-                  : Column(
-                children: [
-                  // Categories header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Categories",
-                        style: Appwidget.semiboldTextStyle(),
-                      ),
-                      Text(
-                        "See All",
-                        style: TextStyle(
-                          color: Color(0xFFfd6f3e),
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.w500,
+                )
+                    : Column(
+                  children: [
+                    // --- Categories Header ---
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Danh mục",
+                            style: Appwidget.semiboldTextStyle().copyWith(color: textColor)),
+                        Text(
+                          "Xem tất cả",
+                          style: TextStyle(
+                            color: Color(0xFFfd6f3e),
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+                    SizedBox(height: 15.0),
 
-                  // Category tiles
-                  Row(
-                    children: [
-                      Container(
-                        margin: EdgeInsets.only(top: 20.0),
-                        padding: EdgeInsets.all(20),
-                        height: 130.0,
-                        decoration: BoxDecoration(
-                          color: Color(0xFFfd6f3e),
-                          borderRadius: BorderRadius.circular(10.0),
+                    // --- Category List ---
+                    Row(
+                      children: [
+                        // Nút "All"
+                        Container(
+                          padding: EdgeInsets.all(15),
+                          height: 110.0,
+                          width: 70,
+                          decoration: BoxDecoration(
+                            color: Color(0xFFfd6f3e),
+                            borderRadius: BorderRadius.circular(15.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xFFfd6f3e).withOpacity(0.4),
+                                blurRadius: 10,
+                                offset: Offset(0, 5),
+                              )
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text("All",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18.0)),
+                              SizedBox(height: 5),
+                              Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                            ],
+                          ),
                         ),
-                        child: Center(
-                          child: Text(
-                            "All",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20.0,
+                        SizedBox(width: 15),
+                        // List các danh mục
+                        Expanded(
+                          child: Container(
+                            height: 110,
+                            child: ListView.builder(
+                              itemCount: categories.length,
+                              scrollDirection: Axis.horizontal,
+                              shrinkWrap: true,
+                              itemBuilder: (context, index) {
+                                return CategoryTile(
+                                  image: categories[index],
+                                  name: categoryName[index],
+                                  cardColor: cardColor, // Truyền màu
+                                  textColor: textColor, // Truyền màu chữ
+                                );
+                              },
                             ),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        child: Container(
-                          margin: EdgeInsets.only(
-                            top: 20.0,
-                            left: 20.0,
-                          ),
-                          height: 130,
-                          child: ListView.builder(
-                            itemCount: categories.length,
-                            scrollDirection: Axis.horizontal,
-                            shrinkWrap: true,
-                            itemBuilder: (context, index) {
-                              return CategoryTile(
-                                image: categories[index],
-                                name: categoryName[index],
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 30.0),
-
-                  // All Products
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "All Products",
-                        style: Appwidget.semiboldTextStyle(),
-                      ),
-                      Text(
-                        "See All",
-                        style: TextStyle(
-                          color: Color(0xFFfd6f3e),
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 20.0),
-
-                  Container(
-                    height: 260,
-                    child: StreamBuilder(
-                      stream: CategoryStream,
-                      builder: (context, AsyncSnapshot snapshot) {
-                        if (snapshot.hasData) {
-                          return ListView.builder(
-                            itemCount: snapshot.data.docs.length,
-                            shrinkWrap: true,
-                            scrollDirection: Axis.horizontal,
-                            itemBuilder: (context, index) {
-                              DocumentSnapshot ds =
-                              snapshot.data.docs[index];
-                              Map<String, dynamic> data =
-                              ds.data() as Map<String, dynamic>;
-
-                              // --- SỬA QUAN TRỌNG: Lấy ID từ ds.id ---
-                              String id = ds.id;
-                              // ---------------------------------------
-
-                              String name = data["Name"] ?? "No Name";
-                              String image = data["Image"] ?? "";
-                              String price = data["Price"] ?? "0";
-                              String detail = data["Detail"] ?? "";
-
-                              return GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              ProductDeTail(
-                                                  id: id,
-                                                  name: name,
-                                                  image: image,
-                                                  detail: detail,
-                                                  price: price)));
-                                },
-                                child: Container(
-                                  width: 250.0,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius:
-                                    BorderRadius.circular(10.0),
-                                  ),
-                                  padding: EdgeInsets.all(
-                                    10.0,
-                                  ),
-                                  margin: EdgeInsets.only(right: 20.0),
-                                  child: Column(
-                                    children: [
-                                      Image.network(
-                                        image,
-                                        height: 150,
-                                        width: 150,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => Icon(Icons.error, size: 100),
-                                      ),
-                                      Text(
-                                        name,
-                                        style: Appwidget
-                                            .semiboldTextStyle(),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      Spacer(), // Dùng Spacer thay vì SizedBox cứng để đẹp hơn
-                                      Row(
-                                        children: [
-                                          Text(
-                                              price,
-                                              style: TextStyle(
-                                                color: Color(
-                                                    0xFFfd6f3e),
-                                                fontWeight:
-                                                FontWeight.bold,
-                                                fontSize: 22.0,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow
-                                                  .ellipsis),
-                                          SizedBox(width: 30.0),
-                                          Container(
-                                            padding: EdgeInsets.all(5),
-                                            decoration: BoxDecoration(
-                                              color:
-                                              Color(0xFFfd6f3e),
-                                              borderRadius:
-                                              BorderRadius
-                                                  .circular(5),
-                                            ),
-                                            child: Icon(
-                                              Icons.add,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        } else if (snapshot.hasError) {
-                          return Center(child: Text("Đã xảy ra lỗi!"));
-                        } else {
-                          return Center(
-                              child: CircularProgressIndicator());
-                        }
-                      },
+                      ],
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    SizedBox(height: 30.0),
+
+                    // --- All Products Header ---
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Sản phẩm nổi bật",
+                            style: Appwidget.semiboldTextStyle().copyWith(color: textColor)),
+                        Text(
+                          "Xem tất cả",
+                          style: TextStyle(
+                            color: Color(0xFFfd6f3e),
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20.0),
+
+                    // --- Product List (Horizontal) ---
+                    Container(
+                      height: 280, // Tăng chiều cao để thẻ thoáng hơn
+                      child: StreamBuilder(
+                        stream: CategoryStream,
+                        builder: (context, AsyncSnapshot snapshot) {
+                          if (snapshot.hasData) {
+                            return ListView.builder(
+                              itemCount: snapshot.data.docs.length,
+                              shrinkWrap: true,
+                              scrollDirection: Axis.horizontal,
+                              itemBuilder: (context, index) {
+                                DocumentSnapshot ds =
+                                snapshot.data.docs[index];
+                                Map<String, dynamic> data =
+                                ds.data() as Map<String, dynamic>;
+                                String id = ds.id;
+
+                                return _buildProductCard(
+                                  context,
+                                  id,
+                                  data,
+                                  cardColor,
+                                  textColor,
+                                  subTextColor,
+                                );
+                              },
+                            );
+                          } else if (snapshot.hasError) {
+                            return Center(
+                                child: Text("Lỗi tải dữ liệu", style: TextStyle(color: textColor)));
+                          } else {
+                            return Center(child: CircularProgressIndicator(color: Colors.orange));
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget buildResultCard(data) {
+  // Widget hiển thị 1 thẻ sản phẩm
+  Widget _buildProductCard(BuildContext context, String id, Map<String, dynamic> data,
+      Color cardColor, Color textColor, Color subTextColor) {
+    String name = data["Name"] ?? "No Name";
+    String image = data["Image"] ?? "";
+    String price = data["Price"] ?? "0";
+    String detail = data["Detail"] ?? "";
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => ProductDeTail(
+                    id: id,
+                    name: name,
+                    image: image,
+                    detail: detail,
+                    price: price)));
+      },
+      child: Container(
+        width: 220.0,
+        margin: EdgeInsets.only(right: 20.0, bottom: 10.0, top: 5.0), // Margin top bottom cho shadow
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(20.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            )
+          ],
+        ),
+        padding: EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Ảnh sản phẩm
+            Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(15),
+                child: Image.network(
+                  image,
+                  height: 140,
+                  width: 140,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      Container(height: 140, width: 140, color: Colors.grey[200], child: Icon(Icons.image_not_supported)),
+                ),
+              ),
+            ),
+            SizedBox(height: 10),
+            // Tên sản phẩm
+            Text(
+              name,
+              style: Appwidget.semiboldTextStyle().copyWith(
+                color: textColor,
+                fontSize: 16,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: 5),
+            // Giá tiền + Nút Add
+            Spacer(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "\$" + price,
+                  style: TextStyle(
+                    color: Color(0xFFfd6f3e),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20.0,
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFfd6f3e),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.add, color: Colors.white, size: 20),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Widget hiển thị kết quả tìm kiếm
+  Widget buildResultCard(data, Color cardColor, Color textColor) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ProductDeTail(
-              id: data["Id"], // Chỗ này đã an toàn vì initiateSearch đã thêm Id
+              id: data["Id"],
               name: data["Name"],
               image: data["Image"],
               detail: data["Detail"],
@@ -418,14 +480,13 @@ class _HomeState extends State<Home> {
         );
       },
       child: Container(
-        padding: EdgeInsets.only(left: 20.0),
-        margin: EdgeInsets.only(bottom: 10.0), // Thêm khoảng cách giữa các kết quả
-        width: MediaQuery.of(context).size.width,
+        margin: EdgeInsets.only(bottom: 10.0),
+        padding: EdgeInsets.all(10.0),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10.0),
+          color: cardColor,
+          borderRadius: BorderRadius.circular(15.0),
+          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
         ),
-        height: 100,
         child: Row(
           children: [
             ClipRRect(
@@ -435,18 +496,29 @@ class _HomeState extends State<Home> {
                 height: 70.0,
                 width: 70.0,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
+                errorBuilder: (context, error, stackTrace) => Icon(Icons.image_not_supported),
               ),
             ),
             SizedBox(width: 20.0),
-            Expanded( // Thêm Expanded để text không bị tràn
-              child: Text(
-                data["Name"],
-                style: Appwidget.semiboldTextStyle(),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data["Name"],
+                    style: Appwidget.semiboldTextStyle().copyWith(color: textColor, fontSize: 16),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    "\$${data["Price"]}",
+                    style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ],
               ),
             ),
+            Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
           ],
         ),
       ),
@@ -454,10 +526,18 @@ class _HomeState extends State<Home> {
   }
 }
 
+// Widget Danh mục (Tách riêng để code gọn)
 class CategoryTile extends StatelessWidget {
-  String image, name;
+  final String image, name;
+  final Color cardColor;
+  final Color textColor;
 
-  CategoryTile({required this.image, required this.name});
+  CategoryTile({
+    required this.image,
+    required this.name,
+    required this.cardColor,
+    required this.textColor
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -471,17 +551,40 @@ class CategoryTile extends StatelessWidget {
         );
       },
       child: Container(
-        padding: EdgeInsets.all(20),
+        width: 90, // Cố định chiều rộng để đều nhau
+        padding: EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10.0),
+          color: cardColor,
+          borderRadius: BorderRadius.circular(15.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 5,
+              offset: Offset(0, 3),
+            )
+          ],
         ),
-        margin: EdgeInsets.only(right: 20),
+        margin: EdgeInsets.only(right: 15),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(image, height: 50.0, width: 50.0, fit: BoxFit.cover, errorBuilder: (context, error, stackTrace) => Icon(Icons.category)),
-            Icon(Icons.arrow_forward),
+            Image.asset(
+              image,
+              height: 40.0,
+              width: 40.0,
+              fit: BoxFit.contain, // Đổi thành contain để ảnh không bị méo
+              errorBuilder: (context, error, stackTrace) => Icon(Icons.category, color: textColor),
+            ),
+            SizedBox(height: 10),
+            Text(
+              name,
+              style: TextStyle(
+                  color: textColor,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

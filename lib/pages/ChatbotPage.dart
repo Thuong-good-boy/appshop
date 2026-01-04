@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // Import Provider
 import 'package:shopnew/pages/ProductDeTail.dart';
-import 'package:shopnew/services/ChatbotService.dart'; // Import trang chi tiết của bạn
+import 'package:shopnew/services/ChatbotService.dart';
+import 'package:shopnew/services/theme_provider.dart'; // Import ThemeProvider
 
 class ChatbotPage extends StatefulWidget {
   const ChatbotPage({super.key});
@@ -11,7 +13,7 @@ class ChatbotPage extends StatefulWidget {
 
 class _ChatbotPageState extends State<ChatbotPage> {
   final TextEditingController _messageController = TextEditingController();
-  final List<Map<String, dynamic>> _messages = []; // Lưu lịch sử chat trên màn hình
+  final List<Map<String, dynamic>> _messages = [];
   final ChatbotService _chatbotService = ChatbotService();
   final ScrollController _scrollController = ScrollController();
 
@@ -20,14 +22,12 @@ class _ChatbotPageState extends State<ChatbotPage> {
   @override
   void initState() {
     super.initState();
-    // Thêm tin nhắn chào mừng
     _messages.add({
       'sender': 'bot',
       'text': 'Chào bạn! Mình là trợ lý AI của ShopNew. Mình có thể giúp gì cho bạn hôm nay?'
     });
   }
 
-  // Hàm cuộn xuống dưới cùng
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -52,37 +52,46 @@ class _ChatbotPageState extends State<ChatbotPage> {
     });
     _scrollToBottom();
 
-    // Gọi AI
-    Map<String, dynamic> botResponse = await _chatbotService.sendMessage(text);
+    // Gọi AI (Giả định ChatbotService trả về đúng định dạng)
+    try {
+      Map<String, dynamic> botResponse = await _chatbotService.sendMessage(text);
 
-    setState(() {
-      _messages.add({
-        'sender': 'bot',
-        'text': botResponse['text'],
-        // Các trường này có thể null nếu bot không bán hàng
-        'productId': botResponse['productId'],
-        'productName': botResponse['productName'],
-        'productImage': botResponse['productImage'],
-        'productPrice': botResponse['productPrice'],
-        'productDetail': botResponse['productDetail'],
+      setState(() {
+        _messages.add({
+          'sender': 'bot',
+          'text': botResponse['text'],
+          'productId': botResponse['productId'],
+          'productName': botResponse['productName'],
+          'productImage': botResponse['productImage'],
+          'productPrice': botResponse['productPrice'],
+          'productDetail': botResponse['productDetail'],
+        });
+        _isLoading = false;
       });
-      _isLoading = false;
-    });
+    } catch (e) {
+      setState(() {
+        _messages.add({
+          'sender': 'bot',
+          'text': 'Xin lỗi, hiện tại mình đang gặp sự cố kết nối. Bạn thử lại sau nhé!',
+        });
+        _isLoading = false;
+      });
+    }
     _scrollToBottom();
   }
 
-  // Widget hiển thị thẻ sản phẩm được gợi ý
-  Widget _buildProductCard(Map<String, dynamic> message) {
+  // Widget hiển thị thẻ sản phẩm (Hỗ trợ Dark Mode)
+  Widget _buildProductCard(Map<String, dynamic> message, Color cardColor, Color textColor) {
     return Container(
       margin: EdgeInsets.only(top: 10),
       padding: EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor, // Màu nền thẻ theo theme
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: Colors.grey.withOpacity(0.3)),
         boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
       ),
-      width: 220, // Giới hạn chiều rộng thẻ
+      width: 220,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -94,14 +103,14 @@ class _ChatbotPageState extends State<ChatbotPage> {
               width: double.infinity,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => Container(
-                height: 120, color: Colors.grey[300], child: Icon(Icons.image_not_supported),
+                height: 120, color: Colors.grey[800], child: Icon(Icons.image_not_supported, color: Colors.white),
               ),
             ),
           ),
           SizedBox(height: 8),
           Text(
             message['productName'] ?? 'Sản phẩm',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -114,7 +123,6 @@ class _ChatbotPageState extends State<ChatbotPage> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                // Chuyển hướng sang ProductDeTail
                 Navigator.push(context, MaterialPageRoute(builder: (context) => ProductDeTail(
                   id: message['productId'],
                   name: message['productName'],
@@ -139,20 +147,36 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
   @override
   Widget build(BuildContext context) {
+    // --- Cấu hình Theme ---
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+    final Color bgColor = Theme.of(context).scaffoldBackgroundColor;
+    final Color cardColor = isDark ? Color(0xFF1E1E1E) : Colors.white; // Màu nền item chat bot
+    final Color inputColor = isDark ? Color(0xFF1E1E1E) : Colors.white; // Màu nền thanh nhập liệu
+    final Color textColor = isDark ? Colors.white : Colors.black87;
+    final Color hintColor = isDark ? Colors.white54 : Colors.grey.shade400;
+    final Color textFieldFill = isDark ? Color(0xFF2C2C2C) : Colors.grey.shade100;
+
     return Scaffold(
+      backgroundColor: bgColor,
       appBar: AppBar(
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.smart_toy_outlined, size: 20),
+            Icon(Icons.smart_toy_outlined, size: 24, color: Color(0xFFfd6f3e)),
             SizedBox(width: 8),
-            Text("Trợ lý ảo AI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            Text("Trợ lý ảo AI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: textColor)),
           ],
         ),
-        backgroundColor: Color(0xfff2f2f2),
+        backgroundColor: bgColor,
+        surfaceTintColor: bgColor,
         elevation: 0,
         centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, color: textColor),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      backgroundColor: Color(0xfff2f2f2),
       body: Column(
         children: [
           Expanded(
@@ -176,26 +200,29 @@ class _ChatbotPageState extends State<ChatbotPage> {
                         Container(
                           padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                           decoration: BoxDecoration(
-                              color: isUser ? Color(0xFFfd6f3e) : Colors.white,
+                              color: isUser ? Color(0xFFfd6f3e) : cardColor,
                               borderRadius: BorderRadius.only(
                                 topLeft: Radius.circular(15),
                                 topRight: Radius.circular(15),
                                 bottomLeft: isUser ? Radius.circular(15) : Radius.zero,
                                 bottomRight: isUser ? Radius.zero : Radius.circular(15),
                               ),
-                              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1))]
+                              boxShadow: [
+                                if(!isDark) // Chỉ đổ bóng ở Light mode cho đẹp
+                                  BoxShadow(color: Colors.black12, blurRadius: 2, offset: Offset(0, 1))
+                              ]
                           ),
                           child: Text(
                             message['text'],
                             style: TextStyle(
-                              color: isUser ? Colors.white : Colors.black87,
+                              color: isUser ? Colors.white : textColor,
                               fontSize: 15,
                             ),
                           ),
                         ),
 
                         // Nếu có sản phẩm đi kèm thì hiển thị card bên dưới
-                        if (!isUser && hasProduct) _buildProductCard(message),
+                        if (!isUser && hasProduct) _buildProductCard(message, cardColor, textColor),
                       ],
                     ),
                   ),
@@ -204,7 +231,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
             ),
           ),
 
-          // Thanh loading khi đang chờ AI
+          // Thanh loading
           if (_isLoading)
             Padding(
               padding: const EdgeInsets.only(left: 20, bottom: 10),
@@ -218,17 +245,23 @@ class _ChatbotPageState extends State<ChatbotPage> {
           // Khu vực nhập liệu
           Container(
             padding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            color: Colors.white,
+            decoration: BoxDecoration(
+                color: inputColor,
+                boxShadow: [
+                  BoxShadow(color: Colors.black12, offset: Offset(0,-1), blurRadius: 3)
+                ]
+            ),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _messageController,
+                    style: TextStyle(color: textColor), // Màu chữ khi gõ
                     decoration: InputDecoration(
                       hintText: "Hỏi về sản phẩm...",
-                      hintStyle: TextStyle(color: Colors.grey.shade400),
+                      hintStyle: TextStyle(color: hintColor),
                       filled: true,
-                      fillColor: Colors.grey.shade100,
+                      fillColor: textFieldFill, // Màu nền ô nhập liệu
                       contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),

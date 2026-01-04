@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:flutter/foundation.dart'; // Thêm để kiểm tra kIsWeb
+import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart'; // 1. Mới thêm: Provider
+import 'package:shopnew/services/theme_provider.dart'; // 2. Mới thêm: Kiểm tra lại đường dẫn file này nếu nó báo đỏ
+
+// Các import cũ của bạn giữ nguyên
 import 'package:shopnew/Admin/AddProduct.dart';
 import 'package:shopnew/Admin/HomeAdmin.dart';
 import 'package:shopnew/Admin/LoginAdmin.dart';
@@ -21,22 +25,20 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Cấu hình Stripe
   Stripe.publishableKey = Publishablekey;
-
-  // Trên Web, Stripe cần script ở index.html.
-  // Trên Mobile, đôi khi cần applySettings, nhưng chúng ta bọc lại để tránh lỗi Platform
-  if (!kIsWeb) {
-    // Nếu bạn có cấu hình thêm cho Mobile thì để ở đây
-    // await Stripe.instance.applySettings();
-  }
 
   // Khởi tạo Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  runApp(const MyApp());
+  // 3. Thay đổi: Bọc MyApp trong ChangeNotifierProvider
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -47,12 +49,26 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: "shopNew",
       debugShowCheckedModeBanner: false,
+
+      // 4. Thay đổi: Cấu hình ThemeMode lấy từ Provider
+      themeMode: Provider.of<ThemeProvider>(context).themeMode,
+
+      // Cấu hình giao diện Sáng (Light Mode)
       theme: ThemeData(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: Color(0xfff2f2f2), // Màu nền xám như cũ
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      // Bạn đang để mặc định vào trang Login của Admin
-      home: const AdminLogin(),
+
+      // Cấu hình giao diện Tối (Dark Mode)
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: Color(0xFF121212), // Màu nền đen
+        useMaterial3: true,
+      ),
+
+      home: const Onboarding(),
     );
   }
 }

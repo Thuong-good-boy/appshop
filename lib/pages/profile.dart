@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:shopnew/pages/onboarding.dart';
+import 'package:provider/provider.dart'; // Import Provider
 import 'package:shopnew/services/auth.dart';
-import 'package:shopnew/services/database.dart';
 import 'package:shopnew/services/share_pref.dart';
+import 'package:shopnew/services/theme_provider.dart'; // Đảm bảo đường dẫn này đúng
 import 'package:shopnew/widget/support_widget.dart';
+import 'package:shopnew/pages/onboarding.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -23,6 +23,12 @@ class _ProfileState extends State<Profile> {
   File? selectedImage;
   bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    getthesharedpref();
+  }
+
   getthesharedpref() async {
     image = await Share_pref().getUserImage();
     name = await Share_pref().getUserName();
@@ -35,8 +41,9 @@ class _ProfileState extends State<Profile> {
     if (image != null) {
       setState(() {
         selectedImage = File(image.path);
-        uploadItem();
+        _isLoading = true; // Bật loading
       });
+      uploadItem();
     }
   }
 
@@ -56,214 +63,280 @@ class _ProfileState extends State<Profile> {
         );
         String imageUrl = response.secureUrl;
         await Share_pref().saveUserImage(imageUrl);
+        // Cập nhật lại UI sau khi upload xong
+        setState(() {
+          image = imageUrl;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.green,
+            content: Text("Cập nhật ảnh thành công!"),
+          ),
+        );
       } catch (e) {
         print(e.toString());
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.redAccent,
-            content: Text("Thay đổi tất bại thất bại"),
+            content: Text("Thay đổi thất bại"),
           ),
         );
       } finally {
         setState(() {
-          _isLoading = false; // Tắt loading dù thành công hay thất bại
+          _isLoading = false;
         });
       }
     }
   }
 
   @override
-  void initState() {
-    // TODO: implement initState
-    getthesharedpref();
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // Lấy theme hiện tại để xử lý màu sắc
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
     return Scaffold(
-      backgroundColor: Color(0xfff2f2f2),
+      // Màu nền tự động theo theme
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Color(0xfff2f2f2),
-        title: Text("Thông tin cá nhân", style: Appwidget.boldTextStyle()),
+        automaticallyImplyLeading: false,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
+        centerTitle: true,
+        title: Text(
+          "Thông tin cá nhân",
+          style: Appwidget.boldTextStyle().copyWith(
+            color: isDark ? Colors.white : Colors.black,
+          ),
+        ),
       ),
       body: name == null
           ? Center(child: CircularProgressIndicator(color: Colors.green))
-          : Container(
-              child: Column(
-                children: [
-                  selectedImage != null
-                      ? GestureDetector(
-                          onTap: () {
-                            getImage();
-                          },
-                          child: Center(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(50.0),
-                              child: Image.file(
-                                selectedImage!,
-                                width: 120.0,
-                                height: 120.0,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        )
-                      : GestureDetector(
-                          onTap: () {
-                            getImage();
-                          },
-                          child: Center(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(50.0),
-                              child: Image.network(
-                                image!,
-                                width: 120.0,
-                                height: 120.0,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                        ),
-                  SizedBox(height: 20.0),
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Material(
-                      elevation: 3.0,
-                      borderRadius: BorderRadius.circular(10.0),
-                      child: Container(
-                        padding: EdgeInsets.all(10.0),
-                        width: MediaQuery.of(context).size.width,
+          : SingleChildScrollView( // Thêm cái này để không bị lỗi tràn màn hình
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 20.0),
+          child: Column(
+            children: [
+              // --- Phần ảnh đại diện ---
+              GestureDetector(
+                onTap: () {
+                  getImage();
+                },
+                child: Center(
+                  child: Stack(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(4), // Viền trắng/đen nhẹ
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark ? Colors.grey : Colors.green,
+                            width: 2,
+                          ),
                         ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.person_outline, size: 35.0),
-                            SizedBox(width: 10.0),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text("Name", style: Appwidget.lightTextStyle()),
-                                Text(
-                                  name!,
-                                  style: Appwidget.semiboldTextStyle(),
-                                ),
-                              ],
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(60.0),
+                          child: selectedImage != null
+                              ? Image.file(
+                            selectedImage!,
+                            width: 120.0,
+                            height: 120.0,
+                            fit: BoxFit.cover,
+                          )
+                              : Image.network(
+                            image ?? "https://i.imgur.com/BoN9kdC.png", // Ảnh mặc định nếu null
+                            width: 120.0,
+                            height: 120.0,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Icon(Icons.person, size: 60),
+                          ),
+                        ),
+                      ),
+                      if (_isLoading)
+                        Positioned.fill(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.black45,
+                              borderRadius: BorderRadius.circular(60),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20.0),
-                  Container(
-                    margin: EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Material(
-                      elevation: 3.0,
-                      borderRadius: BorderRadius.circular(10.0),
-                      child: Container(
-                        padding: EdgeInsets.all(10.0),
-                        width: MediaQuery.of(context).size.width,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.mail_outline, size: 35.0),
-                            SizedBox(width: 10.0),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text("Name", style: Appwidget.lightTextStyle()),
-                                Text(
-                                  email!,
-                                  style: Appwidget.semiboldTextStyle(),
-                                ),
-                              ],
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20.0),
-                  GestureDetector(
-                    onTap:  ()async{
-                      await AuthMethods().SignOut().then((value){
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>Onboarding()));
-                      });
-                    },
-                    child: Container(
-                      margin: EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Material(
-                        elevation: 3.0,
-                        borderRadius: BorderRadius.circular(10.0),
-                        child: Container(
-                          padding: EdgeInsets.all(10.0),
-                          width: MediaQuery.of(context).size.width,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.logout, size: 35.0),
-                              SizedBox(width: 10.0),
-
-                              Text(
-                                "Đăng xuất",
-                                style: Appwidget.semiboldTextStyle(),
-                              ),
-                              Spacer(),
-                              Icon(Icons.arrow_forward_ios_outlined)
-                            ],
                           ),
                         ),
-                      ),
-                    ),
+                    ],
                   ),
-                  SizedBox(height: 20.0),
-                  GestureDetector(
-                    onTap: ()async{
-                      await AuthMethods().deleteuser().then((value){
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>Onboarding()));
-                      });
-                    },
-                    child: Container(
-                      margin: EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Material(
-                        elevation: 3.0,
-                        borderRadius: BorderRadius.circular(10.0),
-                        child: Container(
-                          padding: EdgeInsets.all(10.0),
-                          width: MediaQuery.of(context).size.width,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.delete, size: 35.0),
-                              SizedBox(width: 10.0),
-
-                              Text(
-                                "Xóa tài khoản",
-                                style: Appwidget.semiboldTextStyle(),
-                              ),
-                              Spacer(),
-                              Icon(Icons.arrow_forward_ios_outlined)
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
+              SizedBox(height: 30.0),
+
+              // --- Các ô thông tin ---
+
+              // Tên
+              _buildProfileOption(
+                context,
+                icon: Icons.person_outline,
+                title: "Họ và tên",
+                subtitle: name!,
+                isDark: isDark,
+              ),
+
+              // Email
+              _buildProfileOption(
+                context,
+                icon: Icons.mail_outline,
+                title: "Email",
+                subtitle: email!,
+                isDark: isDark,
+              ),
+
+              // --- NÚT DARK MODE MỚI ---
+              Container(
+                margin: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                child: Material(
+                  elevation: 2.0,
+                  borderRadius: BorderRadius.circular(15.0),
+                  color: Theme.of(context).cardColor, // Màu thẻ động
+                  child: Container(
+                    padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15.0),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          isDark ? Icons.light_mode : Icons.dark_mode,
+                          size: 30.0,
+                          color: isDark ? Colors.white70 : Colors.black54,
+                        ),
+                        SizedBox(width: 20.0),
+                        Text(
+                          isDark ? "Chế độ sáng" : "Chế độ tối",
+                          style: Appwidget.semiboldTextStyle().copyWith(
+                            color: isDark ? Colors.white : Colors.black,
+                          ),
+                        ),
+                        Spacer(),
+                        Switch(
+                          value: isDark,
+                          activeColor: Colors.green,
+                          onChanged: (value) {
+                            themeProvider.toggleTheme(value);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Đăng xuất
+              _buildProfileOption(
+                context,
+                icon: Icons.logout,
+                title: "Đăng xuất",
+                subtitle: "",
+                isDark: isDark,
+                isAction: true,
+                onTap: () async {
+                  await AuthMethods().SignOut().then((value) {
+                    Navigator.pushReplacement(context,
+                        MaterialPageRoute(builder: (context) => Onboarding()));
+                  });
+                },
+              ),
+
+              // Xóa tài khoản
+              _buildProfileOption(
+                context,
+                icon: Icons.delete_outline,
+                title: "Xóa tài khoản",
+                subtitle: "",
+                isDark: isDark,
+                isAction: true,
+                textColor: Colors.redAccent,
+                onTap: () async {
+                  // Nên thêm Dialog xác nhận ở đây nếu có thời gian
+                  await AuthMethods().deleteuser().then((value) {
+                    Navigator.pushReplacement(context,
+                        MaterialPageRoute(builder: (context) => Onboarding()));
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Widget con để tái sử dụng code cho đẹp và gọn
+  Widget _buildProfileOption(
+      BuildContext context, {
+        required IconData icon,
+        required String title,
+        required String subtitle,
+        required bool isDark,
+        bool isAction = false,
+        Color? textColor,
+        VoidCallback? onTap,
+      }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+        child: Material(
+          elevation: 2.0, // Đổ bóng nhẹ
+          borderRadius: BorderRadius.circular(15.0), // Bo góc tròn hơn
+          color: Theme.of(context).cardColor, // Màu nền thẻ tự động đổi
+          child: Container(
+            padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15.0),
             ),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 30.0,
+                  color: textColor ?? (isDark ? Colors.white70 : Colors.black54),
+                ),
+                SizedBox(width: 20.0),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (!isAction) // Chỉ hiện tiêu đề nhỏ nếu không phải nút hành động
+                      Text(
+                        title,
+                        style: Appwidget.lightTextStyle().copyWith(
+                          fontSize: 12,
+                          color: isDark ? Colors.white54 : Colors.black45,
+                        ),
+                      ),
+                    Text(
+                      isAction ? title : subtitle,
+                      style: Appwidget.semiboldTextStyle().copyWith(
+                        color: textColor ?? (isDark ? Colors.white : Colors.black),
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                Spacer(),
+                if (isAction)
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 18,
+                    color: isDark ? Colors.white54 : Colors.black38,
+                  )
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
