@@ -24,7 +24,7 @@ class _HomeAdminState extends State<HomeAdmin> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.admin_panel_settings, color: Colors.black),
-            SizedBox(width: 10),
+            SizedBox(width: 3),
             Text("Admin Dashboard", style: Appwidget.boldTextStyle()),
           ],
         ),

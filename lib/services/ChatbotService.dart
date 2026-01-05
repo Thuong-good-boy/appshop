@@ -3,7 +3,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 
 class ChatbotService {
 
-  static const String _apiKey = 'AIzaSyAdwX_WJ-6YAVz34H-rVJ72ssi0d_OyOYc';
+  static const String _apiKey = '';
 
   late final GenerativeModel _model;
   ChatSession? _chatSession;

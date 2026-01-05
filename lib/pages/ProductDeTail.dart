@@ -2,23 +2,26 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:provider/provider.dart'; // 1. Import Provider
+import 'package:provider/provider.dart';
 import 'package:shopnew/services/constant.dart';
 import 'package:shopnew/services/database.dart';
 import 'package:shopnew/services/share_pref.dart';
-import 'package:shopnew/services/theme_provider.dart'; // 2. Import ThemeProvider
+import 'package:shopnew/services/theme_provider.dart';
 import 'package:shopnew/widget/support_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:shopnew/services/EmailService.dart';
+// Import trang Address của bạn
+import 'package:shopnew/pages/Address.dart';
 
 class ProductDeTail extends StatefulWidget {
-  String id, name, image, detail, price;
-  ProductDeTail(
-      {required this.id,
-        required this.name,
-        required this.image,
-        required this.detail,
-        required this.price});
+  final String id, name, image, detail, price;
+  ProductDeTail({
+    required this.id,
+    required this.name,
+    required this.image,
+    required this.detail,
+    required this.price,
+  });
 
   @override
   State<ProductDeTail> createState() => _ProductDeTailState();
@@ -27,9 +30,9 @@ class ProductDeTail extends StatefulWidget {
 class _ProductDeTailState extends State<ProductDeTail> {
   bool _isBuyLoading = false;
   bool _isShoppingLoading = false;
+  bool _hasAddress = false; // Biến kiểm tra địa chỉ
   String? name, email, image;
 
-  // Giữ nguyên logic lấy dữ liệu của bạn
   getthesharedpref() async {
     name = await Share_pref().getUserName();
     email = await Share_pref().getUserEmail();
@@ -38,7 +41,22 @@ class _ProductDeTailState extends State<ProductDeTail> {
 
   ontheload() async {
     await getthesharedpref();
-    setState(() {});
+
+    // --- KIỂM TRA ĐỊA CHỈ TỪ FIREBASE ---
+    if (email != null) {
+      // Lấy danh sách địa chỉ của user
+      QuerySnapshot addressSnapshot = await FirebaseFirestore.instance
+          .collection("Users")
+          .doc(email)
+          .collection("Address")
+          .get();
+
+      if (addressSnapshot.docs.isNotEmpty) {
+        setState(() {
+          _hasAddress = true;
+        });
+      }
+    }
   }
 
   @override
@@ -51,13 +69,11 @@ class _ProductDeTailState extends State<ProductDeTail> {
 
   @override
   Widget build(BuildContext context) {
-    // --- 1. CẤU HÌNH THEME ---
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
 
-    // Định nghĩa bộ màu
-    final Color bgColor = isDark ? Color(0xFF121212) : Color(0xFFfef5f1); // Nền chính
-    final Color sheetColor = isDark ? Color(0xFF1E1E1E) : Colors.white; // Nền khung thông tin
+    final Color bgColor = isDark ? Color(0xFF121212) : Color(0xFFfef5f1);
+    final Color sheetColor = isDark ? Color(0xFF1E1E1E) : Colors.white;
     final Color textColor = isDark ? Colors.white : Colors.black;
     final Color subTextColor = isDark ? Colors.white70 : Color(0xFF5E5E5E);
 
@@ -69,38 +85,25 @@ class _ProductDeTailState extends State<ProductDeTail> {
             // --- PHẦN TRÊN: ẢNH & NÚT BACK ---
             Stack(
               children: [
-                // Ảnh sản phẩm
                 Container(
-                  height: 350, // Giảm chiều cao chút để cân đối
+                  height: 350,
                   width: double.infinity,
                   color: Colors.transparent,
                   alignment: Alignment.center,
-                  child: Image.network(
-                    widget.image,
-                    fit: BoxFit.contain,
-                  ),
+                  child: Image.network(widget.image, fit: BoxFit.contain),
                 ),
-                // Nút Back (Làm đẹp hơn: hình tròn, bán trong suốt)
                 Positioned(
                   top: 20,
                   left: 20,
                   child: GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
+                    onTap: () => Navigator.pop(context),
                     child: Container(
                       padding: EdgeInsets.all(10),
                       decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: isDark ? Colors.black54 : Colors.white.withOpacity(0.8),
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 5,
-                                offset: Offset(0, 2))
-                          ]),
-                      child: Icon(Icons.arrow_back_ios_new_outlined,
-                          color: textColor, size: 20),
+                          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 2))]),
+                      child: Icon(Icons.arrow_back_ios_new_outlined, color: textColor, size: 20),
                     ),
                   ),
                 ),
@@ -112,22 +115,13 @@ class _ProductDeTailState extends State<ProductDeTail> {
               child: Container(
                 padding: EdgeInsets.only(top: 30.0, left: 20.0, right: 20.0, bottom: 20.0),
                 decoration: BoxDecoration(
-                    color: sheetColor, // Màu nền thay đổi theo theme
-                    borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(40), // Bo tròn mềm mại hơn
-                        topRight: Radius.circular(40)),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.black12,
-                          offset: Offset(0, -5),
-                          blurRadius: 10)
-                    ]
-                ),
+                    color: sheetColor,
+                    borderRadius: BorderRadius.only(topLeft: Radius.circular(40), topRight: Radius.circular(40)),
+                    boxShadow: [BoxShadow(color: Colors.black12, offset: Offset(0, -5), blurRadius: 10)]),
                 width: MediaQuery.of(context).size.width,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Tên và Giá
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,49 +137,27 @@ class _ProductDeTailState extends State<ProductDeTail> {
                           ),
                         ),
                         SizedBox(width: 10),
-                        Text(
-                          widget.price,
-                          style: TextStyle(
-                              color: Color(0xFFfd6f3e),
-                              fontSize: 22.0,
-                              fontWeight: FontWeight.bold),
-                        ),
+                        Text(widget.price, style: TextStyle(color: Color(0xFFfd6f3e), fontSize: 22.0, fontWeight: FontWeight.bold)),
                       ],
                     ),
                     SizedBox(height: 20.0),
-
-                    // Tiêu đề Chi tiết
-                    Text(
-                      "Chi tiết",
-                      style: isDark
-                          ? TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)
-                          : Appwidget.semiboldTextStyle(),
-                    ),
+                    Text("Chi tiết", style: isDark ? TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold) : Appwidget.semiboldTextStyle()),
                     SizedBox(height: 10.0),
-
-                    // Nội dung chi tiết (Dùng Expanded + SingleChildScrollView để cuộn nếu dài)
                     Expanded(
                       child: SingleChildScrollView(
                         physics: BouncingScrollPhysics(),
-                        child: Text(
-                          widget.detail,
-                          style: TextStyle(
-                              color: subTextColor,
-                              fontSize: 15,
-                              height: 1.5 // Giãn dòng cho dễ đọc
-                          ),
-                        ),
+                        child: Text(widget.detail, style: TextStyle(color: subTextColor, fontSize: 15, height: 1.5)),
                       ),
                     ),
-
                     SizedBox(height: 20.0),
 
-                    // --- CÁC NÚT BẤM (GIỮ NGUYÊN LOGIC) ---
+                    // --- CÁC NÚT BẤM ---
                     Row(
                       children: [
                         // Nút Thêm vào giỏ
                         GestureDetector(
                           onTap: () async {
+                            if (_isShoppingLoading) return;
                             Map<String, dynamic> shoppingInfoMap = {
                               "ProductId": widget.id,
                               "Product": widget.name,
@@ -195,37 +167,23 @@ class _ProductDeTailState extends State<ProductDeTail> {
                               "ProductImage": widget.image,
                               "Count": 1,
                             };
-                            if (_isShoppingLoading) return;
-                            setState(() {
-                              _isShoppingLoading = true;
-                            });
+                            setState(() => _isShoppingLoading = true);
                             try {
-                              // GIỮ NGUYÊN HÀM CŨ CỦA BẠN
-                              await DatabaseMethods()
-                                  .addProductToCart(email!, shoppingInfoMap);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      backgroundColor: Colors.greenAccent,
-                                      content: Text(
-                                        "Thêm vào giỏ thành công",
-                                        style: TextStyle(fontSize: 15.0),
-                                      )));
+                              await DatabaseMethods().addProductToCart(email!, shoppingInfoMap);
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: Colors.greenAccent, content: Text("Thêm vào giỏ thành công")));
                             } catch (e) {
-                              print("có lỗi  $e");
+                              print("Lỗi shopping: $e");
                             } finally {
-                              setState(() {
-                                _isShoppingLoading = false;
-                              });
+                              setState(() => _isShoppingLoading = false);
                             }
                           },
                           child: Container(
-                              width: 60.0, // Thu gọn nút giỏ hàng lại cho đẹp
+                              width: 60.0,
                               height: 60.0,
                               decoration: BoxDecoration(
-                                  color: isDark ? Colors.grey[800] : Color(0xFFfef5f1), // Màu nền nút nhạt
+                                  color: isDark ? Colors.grey[800] : Color(0xFFfef5f1),
                                   borderRadius: BorderRadius.circular(15.0),
-                                  border: Border.all(color: Color(0xFFfd6f3e))
-                              ),
+                                  border: Border.all(color: Color(0xFFfd6f3e))),
                               child: Center(
                                 child: _isShoppingLoading
                                     ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFfd6f3e)))
@@ -239,42 +197,38 @@ class _ProductDeTailState extends State<ProductDeTail> {
                           child: GestureDetector(
                             onTap: () async {
                               if (_isBuyLoading) return;
-                              setState(() {
-                                _isBuyLoading = true;
-                              });
+
+                              // --- LOGIC KIỂM TRA ĐỊA CHỈ ---
+                              if (!_hasAddress) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Vui lòng thêm địa chỉ giao hàng!")),
+                                );
+                                // Chuyển sang trang nhập địa chỉ
+                                await Navigator.push(context, MaterialPageRoute(builder: (context) => AddressPage()));
+                                // Load lại để cập nhật _hasAddress sau khi user quay lại
+                                ontheload();
+                                return;
+                              }
+
+                              setState(() => _isBuyLoading = true);
                               try {
                                 await makepayment(widget.price);
                               } catch (e) {
-                                print("có lỗi  $e");
+                                print("Lỗi thanh toán: $e");
                               } finally {
-                                setState(() {
-                                  _isBuyLoading = false;
-                                });
+                                setState(() => _isBuyLoading = false);
                               }
                             },
                             child: Container(
-                              padding: EdgeInsets.symmetric(vertical: 18.0), // Nút cao hơn chút cho sang
+                              padding: EdgeInsets.symmetric(vertical: 18.0),
                               decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(15.0),
                                   color: Color(0xFFfd6f3e),
-                                  boxShadow: [
-                                    BoxShadow(
-                                        color: Color(0xFFfd6f3e).withOpacity(0.4),
-                                        blurRadius: 10,
-                                        offset: Offset(0, 5)
-                                    )
-                                  ]
-                              ),
+                                  boxShadow: [BoxShadow(color: Color(0xFFfd6f3e).withOpacity(0.4), blurRadius: 10, offset: Offset(0, 5))]),
                               child: Center(
                                   child: _isBuyLoading
                                       ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                                      : Text(
-                                    "Mua ngay",
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20.0),
-                                  )),
+                                      : Text("Mua ngay", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20.0))),
                             ),
                           ),
                         ),
@@ -290,20 +244,18 @@ class _ProductDeTailState extends State<ProductDeTail> {
     );
   }
 
-  // --- LOGIC THANH TOÁN & MAIL (GIỮ NGUYÊN KHÔNG ĐỔI) ---
+  // --- GIỮ NGUYÊN PHẦN STRIPE PAYMENT CỦA BẠN ---
   Future<void> makepayment(String amount) async {
     try {
       paymentIntent = await createPaymentIntent(amount, 'usd');
-      await Stripe.instance
-          .initPaymentSheet(
+      await Stripe.instance.initPaymentSheet(
           paymentSheetParameters: SetupPaymentSheetParameters(
               paymentIntentClientSecret: paymentIntent?["client_secret"],
               style: ThemeMode.dark,
-              merchantDisplayName: "ShopNew"))
-          .then((value) {});
+              merchantDisplayName: "ShopNew"));
       displayPaymentSheet();
-    } catch (e, s) {
-      print("exception $e$s");
+    } catch (e) {
+      print("Stripe Init Error: $e");
     }
   }
 
@@ -311,28 +263,26 @@ class _ProductDeTailState extends State<ProductDeTail> {
     try {
       await Stripe.instance.presentPaymentSheet().then((value) async {
 
-        // --- SỬA ĐOẠN NÀY: CHUẨN HÓA DỮ LIỆU VỀ DẠNG DANH SÁCH ---
+        // Lấy địa chỉ mới nhất để lưu vào đơn hàng
+        var addrSnap = await FirebaseFirestore.instance.collection("Users").doc(email).collection("Address").get();
+        var addrData = addrSnap.docs.first.data();
+        String fullAddr = "${addrData["Line"]}, ${addrData["Ward"]}, ${addrData["District"]}, ${addrData["City"]}";
+
         Map<String, dynamic> orderInfoMap = {
           "Email": email,
-          "Name": name, // Tên người mua
-          "Image": image, // Avatar người mua
+          "Name": addrData["Name"] ?? name,
+          "Phone": addrData["Phone"] ?? "",
+          "Address": fullAddr,
           "Status": "Đang vận chuyển",
-          "OrderTimestamp": DateTime.now(), // Dùng Timestamp để sort cho dễ
-          "Total": widget.price, // Lưu tổng tiền
+          "OrderTimestamp": FieldValue.serverTimestamp(),
+          "Total": widget.price,
           "Products": [
-            {
-              "Name": widget.name,
-              "Image": widget.image, // Ảnh sản phẩm
-              "Price": widget.price,
-              "Count": 1
-            }
+            {"Name": widget.name, "Image": widget.image, "Price": widget.price, "Count": 1}
           ]
         };
-        // -----------------------------------------------------------
 
         await DatabaseMethods().orderDetails(orderInfoMap);
 
-        // ... (Phần gửi mail giữ nguyên) ...
         if (email != null && name != null) {
           await EmailService.sendOrderConfirmation(
             userEmail: email!,
@@ -346,28 +296,19 @@ class _ProductDeTailState extends State<ProductDeTail> {
         showDialog(
             context: context,
             builder: (_) => AlertDialog(
-              backgroundColor: Provider.of<ThemeProvider>(context, listen: false).isDarkMode ? Color(0xFF1E1E1E) : Colors.white,
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.check_circle, color: Colors.green, size: 50),
                   SizedBox(height: 10),
                   Text("Thanh toán thành công!", style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text("Đã gửi mail xác nhận.")
                 ],
               ),
             ));
         paymentIntent = null;
-      }).onError((error, stackTrace) {
-        print("Error is : --> $error $stackTrace");
       });
     } on StripeException catch (e) {
-      print("$e");
-      showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            content: Text("Thanh toán bị hủy hoặc lỗi"),
-          ));
+      print("User cancelled: $e");
     }
   }
 
@@ -380,15 +321,12 @@ class _ProductDeTailState extends State<ProductDeTail> {
       };
       var response = await http.post(
         Uri.parse("https://api.stripe.com/v1/payment_intents"),
-        headers: {
-          "Authorization": 'Bearer $Secretkey',
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
+        headers: {"Authorization": 'Bearer $Secretkey', "Content-Type": "application/x-www-form-urlencoded"},
         body: body,
       );
       return jsonDecode(response.body);
     } catch (err) {
-      print("err charging user : ${err.toString()}");
+      print("err charging: $err");
     }
   }
 
