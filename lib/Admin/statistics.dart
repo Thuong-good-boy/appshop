@@ -13,13 +13,12 @@ class Statistics extends StatefulWidget {
 }
 
 class _StatisticsState extends State<Statistics> {
-  int totalOrders = 0; // Tổng số đơn (kể cả hủy)
-  int successfulOrders = 0; // Đơn thành công (để thống kê thêm nếu cần)
+  int totalOrders = 0;
+  int successfulOrders = 0;
   int totalInventory = 0;
   double totalRevenue = 0.0;
   bool _isLoading = true;
 
-  // Dữ liệu cho biểu đồ 3 tháng
   List<double> monthlyRevenueData = [0.0, 0.0, 0.0];
   List<String> monthLabels = [];
 
@@ -30,7 +29,6 @@ class _StatisticsState extends State<Statistics> {
     getStatistics();
   }
 
-  // Tạo nhãn tháng (Ví dụ: T11, T12, T1)
   void _generateMonthLabels() {
     DateTime now = DateTime.now();
     for (int i = 2; i >= 0; i--) {
@@ -39,15 +37,13 @@ class _StatisticsState extends State<Statistics> {
     }
   }
 
-  // --- HÀM TÍNH TOÁN LOGIC CHÍNH ---
   Future<void> getStatistics() async {
     try {
-      // 1. Lấy tất cả đơn hàng
       QuerySnapshot orderSnapshot = await FirebaseFirestore.instance.collection("Orders").get();
       List<DocumentSnapshot> orders = orderSnapshot.docs;
 
-      totalOrders = orders.length; // Tổng số lượng đơn đặt
-      successfulOrders = 0; // Reset biến đếm đơn thành công
+      totalOrders = orders.length;
+      successfulOrders = 0;
 
       double tempTotalRevenue = 0.0;
       List<double> tempMonthlyRevenue = [0, 0, 0];
@@ -56,21 +52,16 @@ class _StatisticsState extends State<Statistics> {
       for (var doc in orders) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
-        // --- BƯỚC 1: KIỂM TRA TRẠNG THÁI (QUAN TRỌNG) ---
         String status = (data["Status"] ?? "").toString().toLowerCase();
 
-        // Nếu đơn hàng bị hủy hoặc từ chối -> BỎ QUA, không tính tiền
-        if (status.contains("hủy") || status.contains("cancelled") || status.contains("từ chối") || status.contains("rejected")) {
+        if (status.contains("đã hủy") ) {
           continue;
         }
 
-        // Nếu không bị hủy, tăng biến đếm đơn thành công
         successfulOrders++;
 
-        // --- BƯỚC 2: TÍNH TIỀN CHO TỪNG ĐƠN ---
         double orderValue = 0.0;
 
-        // TH1: Đơn hàng từ Giỏ hàng (Có mảng Products)
         if (data.containsKey('Products') && data['Products'] is List) {
           List<dynamic> products = data['Products'];
           for (var item in products) {
@@ -79,17 +70,13 @@ class _StatisticsState extends State<Statistics> {
             orderValue += (price * count);
           }
         }
-        // TH2: Đơn hàng Mua ngay (Lẻ) hoặc dữ liệu cũ
         else {
-          // Check cả trường Price (viết hoa) và price (viết thường)
           var priceRaw = data['Price'] ?? data['price'] ?? data['Total'];
           orderValue = _parsePrice(priceRaw);
         }
 
-        // Cộng vào tổng doanh thu
         tempTotalRevenue += orderValue;
 
-        // --- BƯỚC 3: XỬ LÝ NGÀY THÁNG ĐỂ VẼ BIỂU ĐỒ ---
         DateTime? orderDate;
         try {
           if (data.containsKey('OrderTimestamp')) {
@@ -101,26 +88,18 @@ class _StatisticsState extends State<Statistics> {
             try { orderDate = DateFormat('dd/MM/yyyy').parse(dateStr); } catch (_) {}
           }
         } catch (e) {
-          // Bỏ qua lỗi ngày tháng
         }
 
-        // Phân loại vào 3 cột biểu đồ (Tháng hiện tại, Tháng trước, Tháng kia)
         if (orderDate != null) {
-          // Logic: 0 là tháng hiện tại, 1 là tháng trước, 2 là tháng kia
           int diffMonth = (now.year - orderDate.year) * 12 + now.month - orderDate.month;
 
           if (diffMonth >= 0 && diffMonth <= 2) {
-            // Mảng tempMonthlyRevenue của mình index 0 là tháng xa nhất, 2 là hiện tại
-            // Nên cần map lại index:
-            // diff = 0 (hiện tại) -> index 2
-            // diff = 1 (tháng trước) -> index 1
-            // diff = 2 (tháng kia) -> index 0
+
             tempMonthlyRevenue[2 - diffMonth] += orderValue;
           }
         }
       }
 
-      // 2. Đếm tổng sản phẩm trong kho (Inventory)
       try {
         QuerySnapshot productSnapshot = await FirebaseFirestore.instance.collection("Products").get();
         totalInventory = productSnapshot.docs.length;
@@ -142,25 +121,20 @@ class _StatisticsState extends State<Statistics> {
     }
   }
 
-  // Hàm phụ trợ: Chuyển chuỗi tiền tệ (500.000₫) thành số double (500000.0)
   double _parsePrice(dynamic priceRaw) {
     if (priceRaw == null) return 0.0;
     String str = priceRaw.toString();
-    // Xóa tất cả ký tự không phải số
     String cleanStr = str.replaceAll(RegExp(r'[^0-9]'), '');
     return double.tryParse(cleanStr) ?? 0.0;
   }
 
-  // Hàm phụ trợ: Format tiền hiển thị
   String formatCurrency(double amount) {
     final format = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ', decimalDigits: 0);
     return format.format(amount);
   }
 
-  // Tính giá trị Y lớn nhất cho biểu đồ để không bị tràn
   double _getMaxY() {
     double maxVal = monthlyRevenueData.reduce((curr, next) => curr > next ? curr : next);
-    // Nếu max = 0 thì set mặc định để biểu đồ không lỗi, ngược lại nhân 1.2 cho thoáng
     return maxVal == 0 ? 1000000 : maxVal * 1.2;
   }
 
@@ -233,7 +207,6 @@ class _StatisticsState extends State<Statistics> {
 
               const SizedBox(height: 25),
 
-              // --- 2 CARD NHỎ (ĐƠN & KHO) ---
               Row(
                 children: [
                   Expanded(
@@ -266,7 +239,6 @@ class _StatisticsState extends State<Statistics> {
               Text("Biểu đồ doanh thu 3 tháng", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
               const SizedBox(height: 20),
 
-              // --- BIỂU ĐỒ CỘT ---
               Container(
                 height: 350,
                 padding: const EdgeInsets.fromLTRB(10, 30, 20, 10),
@@ -315,11 +287,8 @@ class _StatisticsState extends State<Statistics> {
                     gridData: const FlGridData(show: false),
                     borderData: FlBorderData(show: false),
                     barGroups: [
-                      // Tháng kia (cột xám)
                       _makeGroupData(0, monthlyRevenueData[0], Colors.grey.shade400, isDark),
-                      // Tháng trước (cột cam nhạt)
                       _makeGroupData(1, monthlyRevenueData[1], const Color(0xffff9f7f), isDark),
-                      // Tháng này (cột cam đậm)
                       _makeGroupData(2, monthlyRevenueData[2], const Color(0xFFfd6f3e), isDark),
                     ],
                   ),
@@ -333,7 +302,6 @@ class _StatisticsState extends State<Statistics> {
     );
   }
 
-  // Hàm tạo cột biểu đồ
   BarChartGroupData _makeGroupData(int x, double y, Color barColor, bool isDark) {
     return BarChartGroupData(
       x: x,
@@ -353,7 +321,6 @@ class _StatisticsState extends State<Statistics> {
     );
   }
 
-  // Widget thẻ thông tin nhỏ
   Widget _buildInfoCard({
     required String title,
     required String value,

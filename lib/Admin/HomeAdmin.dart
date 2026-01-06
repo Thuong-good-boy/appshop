@@ -37,7 +37,6 @@ class _HomeAdminState extends State<HomeAdmin> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- PHẦN THỐNG KÊ NHANH (HEADER) ---
               Container(
                 width: MediaQuery.of(context).size.width,
                 padding: EdgeInsets.all(20),
@@ -131,7 +130,6 @@ class _HomeAdminState extends State<HomeAdmin> {
     );
   }
 
-  // --- Widget Card Tùy Chỉnh (Giúp code gọn hơn) ---
   Widget _buildMenuCard({
     required String title,
     required IconData icon,

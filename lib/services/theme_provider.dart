@@ -7,9 +7,8 @@ class ThemeProvider extends ChangeNotifier {
   bool get isDarkMode => themeMode == ThemeMode.dark;
 
   ThemeProvider() {
-    loadTheme(); // Load theme khi mở app
+    loadTheme();
   }
-
   void toggleTheme(bool isOn) async {
     themeMode = isOn ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();

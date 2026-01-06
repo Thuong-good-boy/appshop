@@ -11,15 +11,12 @@ class ManageProduct extends StatefulWidget {
 }
 
 class _ManageProductState extends State<ManageProduct> {
-  // Biến dùng để lấy dữ liệu từ Firebase theo thời gian thực
   Stream? productStream;
 
-  // Controller dùng cho việc Sửa sản phẩm
   TextEditingController nameController = TextEditingController();
   TextEditingController priceController = TextEditingController();
   TextEditingController detailController = TextEditingController();
 
-  // Hàm lấy dữ liệu
   getOntheLoad() async {
     productStream = FirebaseFirestore.instance.collection("Products").snapshots();
     setState(() {});
@@ -31,9 +28,7 @@ class _ManageProductState extends State<ManageProduct> {
     super.initState();
   }
 
-  // --- HÀM 1: XÓA SẢN PHẨM ---
   Future<void> deleteProduct(String id) async {
-    // Hiện hộp thoại xác nhận trước khi xóa
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -59,15 +54,12 @@ class _ManageProductState extends State<ManageProduct> {
     );
   }
 
-  // --- HÀM 2: HIỆN POPUP SỬA SẢN PHẨM ---
   void showEditDialog(DocumentSnapshot doc) {
-    // Gán dữ liệu cũ vào ô nhập
     nameController.text = doc["Name"];
     priceController.text = doc["Price"];
     detailController.text = doc["Detail"];
 
-    String id = doc.id; // Lấy ID để biết update cái nào
-
+    String id = doc.id;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -98,7 +90,6 @@ class _ManageProductState extends State<ManageProduct> {
 
             const SizedBox(height: 20),
 
-            // Nút Lưu
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -166,7 +157,6 @@ class _ManageProductState extends State<ManageProduct> {
               ),
               child: Row(
                 children: [
-                  // 1. Ảnh sản phẩm
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: Image.network(
@@ -193,10 +183,8 @@ class _ManageProductState extends State<ManageProduct> {
                     ),
                   ),
 
-                  // 3. Nút Sửa & Xóa
                   Column(
                     children: [
-                      // Nút Sửa
                       GestureDetector(
                         onTap: () => showEditDialog(ds),
                         child: Container(
@@ -248,7 +236,6 @@ class _ManageProductState extends State<ManageProduct> {
           ],
         ),
       ),
-      // Nút trôi để thêm sản phẩm mới nhanh
       floatingActionButton: FloatingActionButton(
         onPressed: () {
            Navigator.push(context, MaterialPageRoute(builder: (context) => AddProduct()));

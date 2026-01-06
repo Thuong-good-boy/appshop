@@ -5,7 +5,6 @@ class EmailService {
   static const String _username = '22T1020756@husc.edu.vn';
   static const String _password = 'bxkvwtkyqefrfuuh';
 
-  // --- HÀM GỐC: GỬI MAIL CƠ BẢN ---
   static Future<bool> sendEmail({
     required String toEmail,
     required String subject,
@@ -14,10 +13,10 @@ class EmailService {
     final smtpServer = gmail(_username, _password);
 
     final message = Message()
-      ..from = Address(_username, 'ShopNew Support') // Tên hiển thị
+      ..from = Address(_username, 'ShopNew Support')
       ..recipients.add(toEmail)
       ..subject = subject
-      ..html = messageBody; // Dùng HTML để format đẹp hơn text thường
+      ..html = messageBody;
 
     try {
       final sendReport = await send(message, smtpServer);
@@ -29,7 +28,6 @@ class EmailService {
     }
   }
 
-  // --- MẪU 1: GỬI KHI ĐĂNG KÝ THÀNH CÔNG ---
   static Future<void> sendRegistrationSuccess(String userEmail, String userName) async {
     String subject = "Chào mừng đến với ShopNew!";
     String content = '''
@@ -43,7 +41,6 @@ class EmailService {
     await sendEmail(toEmail: userEmail, subject: subject, messageBody: content);
   }
 
-  // --- MẪU 2: GỬI KHI MUA HÀNG THÀNH CÔNG ---
   static Future<void> sendOrderConfirmation({
     required String userEmail,
     required String userName,

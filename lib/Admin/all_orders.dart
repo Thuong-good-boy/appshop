@@ -17,7 +17,6 @@ class _AllOrdersState extends State<AllOrders> {
   getOntheLoad() async {
     orderStream = FirebaseFirestore.instance
         .collection("Orders")
-    // .orderBy('OrderTimestamp', descending: true) // Bật dòng này nếu muốn sắp xếp theo ngày
         .snapshots();
     setState(() {});
   }
@@ -28,7 +27,6 @@ class _AllOrdersState extends State<AllOrders> {
     super.initState();
   }
 
-  // --- MENU ĐỔI TRẠNG THÁI ---
   void showStatusBottomSheet(String orderId, String currentStatus, bool isDark) {
     showModalBottomSheet(
       context: context,
@@ -81,7 +79,6 @@ class _AllOrdersState extends State<AllOrders> {
 
   @override
   Widget build(BuildContext context) {
-    // Lấy theme hiện tại (Sáng/Tối)
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
 
@@ -119,11 +116,9 @@ class _AllOrdersState extends State<AllOrders> {
                 DocumentSnapshot ds = snapshot.data.docs[index];
                 Map<String, dynamic> data = ds.data() as Map<String, dynamic>;
 
-                // --- 1. LOGIC XỬ LÝ DỮ LIỆU ĐA DẠNG ---
                 List<Map<String, dynamic>> productsToShow = [];
                 String totalPriceDisplay = "0đ";
 
-                // Trường hợp 1: Đơn hàng từ GIỎ HÀNG (Có mảng Products)
                 if (data.containsKey('Products') && data['Products'] is List) {
                   List<dynamic> listRaw = data['Products'];
                   for (var item in listRaw) {
@@ -134,12 +129,10 @@ class _AllOrdersState extends State<AllOrders> {
                       "Count": item["Count"] ?? 1,
                     });
                   }
-                  // Lấy giá tổng nếu có, hoặc lấy giá sp đầu tiên đại diện
                   if (productsToShow.isNotEmpty) {
                     totalPriceDisplay = productsToShow[0]['Price'];
                   }
                 }
-                // Trường hợp 2: Đơn hàng MUA NGAY (Dữ liệu nằm lẻ ở ngoài)
                 else if (data.containsKey('Product')) {
                   productsToShow.add({
                     "Name": data["Product"],
@@ -150,7 +143,6 @@ class _AllOrdersState extends State<AllOrders> {
                   totalPriceDisplay = data["Price"];
                 }
 
-                // --- 2. Xử lý thông tin Khách hàng (Tránh lỗi null Name) ---
                 String name = "Khách hàng";
                 if (data.containsKey("Name")) {
                   name = data["Name"];
@@ -158,7 +150,6 @@ class _AllOrdersState extends State<AllOrders> {
                   name = data["Email"].toString().split('@')[0];
                 }
 
-                // --- 3. Xử lý Trạng thái ---
                 String status = data["Status"] ?? "Đang xử lý";
                 Color statusColor = Colors.grey;
                 if (status == "Đang xử lý") statusColor = Colors.orange;
@@ -166,7 +157,6 @@ class _AllOrdersState extends State<AllOrders> {
                 else if (status == "Đã giao") statusColor = Colors.green;
                 else if (status == "Đã hủy") statusColor = Colors.red;
 
-                // --- GIAO DIỆN ---
                 return Container(
                   margin: const EdgeInsets.only(bottom: 20),
                   padding: const EdgeInsets.all(15),
@@ -183,7 +173,6 @@ class _AllOrdersState extends State<AllOrders> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header: Tên khách + Trạng thái
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -218,7 +207,6 @@ class _AllOrdersState extends State<AllOrders> {
                       ),
                       Divider(color: Colors.grey.withOpacity(0.2), height: 20),
 
-                      // Danh sách sản phẩm
                       if (productsToShow.isEmpty)
                         Text("Dữ liệu lỗi hoặc chưa đồng bộ", style: TextStyle(color: Colors.red)),
 
@@ -256,7 +244,6 @@ class _AllOrdersState extends State<AllOrders> {
 
                       Divider(color: Colors.grey.withOpacity(0.2), height: 10),
 
-                      // Footer: Tổng tiền
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [

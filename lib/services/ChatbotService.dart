@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'dart:convert';
+
+import 'package:shopnew/services/constant.dart';
 
 class ChatbotService {
-
-  static const String _apiKey = '';
+  static String _apiKey = apiKey;
 
   late final GenerativeModel _model;
   ChatSession? _chatSession;
@@ -15,10 +17,8 @@ class ChatbotService {
     );
   }
 
-  // Hàm lấy toàn bộ sản phẩm để "dạy" cho Gemini
   Future<String> _getProductContext() async {
     try {
-      // Lấy danh sách sản phẩm từ Firestore
       QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('Products').get();
 
       if (snapshot.docs.isEmpty) return "Hiện tại cửa hàng không có sản phẩm nào.";
@@ -27,11 +27,10 @@ class ChatbotService {
 
       for (var doc in snapshot.docs) {
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-        // Tạo chuỗi mô tả từng sản phẩm
         context += "- Tên: ${data['Name']}\n";
         context += "  Giá: ${data['Price']}\n";
         context += "  Mô tả: ${data['Detail']}\n";
-        context += "  ID: ${doc.id}\n"; // Quan trọng: Phải đưa ID cho Gemini biết
+        context += "  ID: ${doc.id}\n";
         context += "---\n";
       }
 
@@ -44,21 +43,20 @@ class ChatbotService {
 
   Future<Map<String, dynamic>> sendMessage(String message) async {
     try {
-      // Nếu là lần đầu chat, cần khởi tạo session và nạp dữ liệu sản phẩm
       if (_chatSession == null) {
         String productData = await _getProductContext();
 
-        // Cấu hình hướng dẫn cho Gemini (System Instruction)
         String systemInstruction = """
-        Bạn là nhân viên tư vấn bán hàng nhiệt tình, thân thiện.
+        Bạn là nhân viên tư vấn bán hàng nhiệt tình, thân thiện của ShopNew.
         Dưới đây là dữ liệu sản phẩm của cửa hàng:
         $productData
         
         Quy tắc trả lời:
         1. Trả lời ngắn gọn, tập trung vào nhu cầu khách hàng.
         2. Chỉ tư vấn các sản phẩm có trong danh sách trên.
-        3. QUAN TRỌNG: Nếu bạn gợi ý một sản phẩm cụ thể cho khách, hãy chèn ID của nó vào cuối câu trả lời theo định dạng chính xác này: [PRODUCT_ID: id_của_sản_phẩm].
-        4. Nếu không tìm thấy sản phẩm phù hợp, hãy xin lỗi và gợi ý sản phẩm khác.
+        3. QUAN TRỌNG: Nếu bạn gợi ý các sản phẩm cho khách, hãy chèn ID của chúng vào cuối câu trả lời. 
+           Nếu có nhiều sản phẩm phù hợp, hãy liệt kê tất cả ID theo định dạng: [PRODUCT_ID: id1] [PRODUCT_ID: id2] [PRODUCT_ID: id3].
+        4. Nếu không tìm thấy sản phẩm phù hợp, hãy xin lỗi và gợi ý sản phẩm gần giống nhất.
         """;
 
         _chatSession = _model.startChat(history: [
@@ -66,45 +64,41 @@ class ChatbotService {
         ]);
       }
 
-      // Gửi tin nhắn của khách
-      final response = await _chatSession!.sendMessage(Content.text(message));
-      final textResponse = response.text ?? "Xin lỗi, tôi đang gặp sự cố.";
+        final response = await _chatSession!.sendMessage(Content.text(message));
+        final textResponse = response.text ?? "Xin lỗi, tôi đang gặp sự cố.";
 
-      // --- XỬ LÝ PHÂN TÁCH ID SẢN PHẨM ---
-      String finalText = textResponse;
-      String? productId;
+        String finalText = textResponse;
+        List<Map<String, dynamic>> productsList = [];
 
-      // Tìm mẫu [PRODUCT_ID: xxx]
-      RegExp regExp = RegExp(r'\[PRODUCT_ID:\s*(.*?)\]');
-      Match? match = regExp.firstMatch(textResponse);
+        // lấy id
+        RegExp regExp = RegExp(r'\[PRODUCT_ID:\s*([^\]]+)\]');
+        Iterable<RegExpMatch> matches = regExp.allMatches(textResponse);
 
-      if (match != null) {
-        productId = match.group(1); // Lấy ID ra
-        finalText = textResponse.replaceAll(match.group(0)!, '').trim(); // Xóa mã ID khỏi lời thoại cho đẹp
-      }
+        for (var match in matches) {
+          String pId = match.group(1)!.trim();
 
-      // Nếu có ID, ta cần lấy lại thông tin chi tiết (ảnh, tên) để hiển thị UI đẹp
-      Map<String, dynamic> result = {
-        'text': finalText,
-      };
+          finalText = finalText.replaceAll(match.group(0)!, '').trim();
 
-      if (productId != null) {
-        // Lấy lại thông tin chi tiết từ Firestore để hiển thị cái thẻ đẹp
-        DocumentSnapshot doc = await FirebaseFirestore.instance.collection('Products').doc(productId).get();
-        if (doc.exists) {
-          Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-          result['productId'] = productId;
-          result['productName'] = data['Name'];
-          result['productImage'] = data['Image'];
-          result['productPrice'] = data['Price'];
-          result['productDetail'] = data['Detail'];
+          DocumentSnapshot doc = await FirebaseFirestore.instance.collection('Products').doc(pId).get();
+          if (doc.exists) {
+            Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+            productsList.add({
+              'productId': pId,
+              'productName': data['Name'],
+              'productImage': data['Image'],
+              'productPrice': data['Price'],
+              'productDetail': data['Detail'],
+            });
+          }
         }
-      }
 
-      return result;
+        return {
+          'text': finalText,
+          'products': productsList,
+        };
 
     } catch (e) {
-      return {'text': "Lỗi kết nối: $e"};
+      return {'text': "Lỗi kết nối: $e", 'products': []};
     }
   }
 }

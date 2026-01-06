@@ -272,7 +272,6 @@ class _ShoppingState extends State<Shopping> {
     );
   }
 
-  // --- HÀM XỬ LÝ THANH TOÁN (QUAN TRỌNG) ---
   Future<void> handleCheckout() async {
     if (cartItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Giỏ hàng rỗng!"), backgroundColor: Colors.red));
@@ -286,7 +285,6 @@ class _ShoppingState extends State<Shopping> {
     setState(() => _isBuyLoading = true);
 
     try {
-      // 1. Chuẩn bị dữ liệu danh sách sản phẩm (Để lưu vào Firebase)
       List<Map<String, dynamic>> productsList = [];
       for (var doc in cartItems) {
         productsList.add({
@@ -297,11 +295,9 @@ class _ShoppingState extends State<Shopping> {
         });
       }
 
-      // 2. Lấy thông tin người nhận từ Address
       Map<String, dynamic> addrData = currentAddressDoc!.data() as Map<String, dynamic>;
       String fullAddress = "${addrData["Line"]}, ${addrData["Ward"]}, ${addrData["District"]}, ${addrData["City"]}";
 
-      // 3. Tạo Map đơn hàng tổng
       Map<String, dynamic> orderInfoMap = {
         "Email": email,
         "Name": addrData["Name"],         // Tên người nhận
@@ -313,7 +309,6 @@ class _ShoppingState extends State<Shopping> {
         "Products": productsList,         // Danh sách sản phẩm (Quan trọng cho Admin)
       };
 
-      // 4. Gọi thanh toán Stripe
       await makeStripePayment(tong.toStringAsFixed(0), orderInfoMap, productsList);
 
     } catch (e) {
@@ -337,12 +332,9 @@ class _ShoppingState extends State<Shopping> {
       // Hiển thị bảng thanh toán
       await Stripe.instance.presentPaymentSheet();
 
-      // --- THANH TOÁN THÀNH CÔNG ---
 
-      // 1. Lưu đơn hàng vào Firestore
       await DatabaseMethods().orderDetails(orderInfoMap);
 
-      // 2. Gửi email xác nhận
       String productNames = productsList.map((e) => "${e["Name"]} (x${e["Count"]})").join(", ");
       await EmailService.sendOrderConfirmation(
         userEmail: email!,

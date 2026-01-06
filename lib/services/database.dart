@@ -75,21 +75,17 @@ class DatabaseMethods {
         .doc(email)
         .collection("Shopping");
 
-    // 1. KIỂM TRA xem sản phẩm đã có trong giỏ chưa
     QuerySnapshot query = await cartRef
         .where("ProductId", isEqualTo: productId)
         .limit(1)
         .get();
 
     if (query.docs.isNotEmpty) {
-      // 2. NẾU CÓ: Cập nhật (cộng dồn) số lượng
       DocumentSnapshot doc = query.docs.first;
       await doc.reference.update({
         "Count": FieldValue.increment(quantityToAdd)
       });
     } else {
-      // 3. NẾU CHƯA CÓ: Thêm mới
-      // Đảm bảo map có đủ thông tin
       await cartRef.add(productInfoMap);
     }
   }

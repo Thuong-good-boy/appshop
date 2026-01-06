@@ -118,7 +118,7 @@ class _HomeState extends State<Home> {
         child: Icon(Icons.support_agent_rounded, color: Colors.white, size: 30),
       ),
 
-      body: SafeArea( // Tránh tai thỏ
+      body: SafeArea(
         child: SingleChildScrollView(
           child: name == null
               ? Container(
@@ -189,7 +189,7 @@ class _HomeState extends State<Home> {
                   ),
                   child: TextField(
                     controller: searchcontroller,
-                    style: TextStyle(color: textColor), // Màu chữ nhập vào
+                    style: TextStyle(color: textColor),
                     onChanged: (value) {
                       initiateSearch(value.toUpperCase());
                     },
@@ -248,10 +248,8 @@ class _HomeState extends State<Home> {
                     ),
                     SizedBox(height: 15.0),
 
-                    // --- Category List ---
                     Row(
                       children: [
-                        // Nút "All"
                         Container(
                           padding: EdgeInsets.all(15),
                           height: 110.0,
@@ -281,7 +279,6 @@ class _HomeState extends State<Home> {
                           ),
                         ),
                         SizedBox(width: 15),
-                        // List các danh mục
                         Expanded(
                           child: Container(
                             height: 110,
@@ -293,8 +290,8 @@ class _HomeState extends State<Home> {
                                 return CategoryTile(
                                   image: categories[index],
                                   name: categoryName[index],
-                                  cardColor: cardColor, // Truyền màu
-                                  textColor: textColor, // Truyền màu chữ
+                                  cardColor: cardColor,
+                                  textColor: textColor,
                                 );
                               },
                             ),
@@ -304,7 +301,6 @@ class _HomeState extends State<Home> {
                     ),
                     SizedBox(height: 30.0),
 
-                    // --- All Products Header ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -322,7 +318,6 @@ class _HomeState extends State<Home> {
                     ),
                     SizedBox(height: 20.0),
 
-                    // --- Product List (Horizontal) ---
                     Container(
                       height: 280, // Tăng chiều cao để thẻ thoáng hơn
                       child: StreamBuilder(
@@ -462,7 +457,6 @@ class _HomeState extends State<Home> {
     );
   }
 
-  // Widget hiển thị kết quả tìm kiếm
   Widget buildResultCard(data, Color cardColor, Color textColor) {
     return GestureDetector(
       onTap: () {

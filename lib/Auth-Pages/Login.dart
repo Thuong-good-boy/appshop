@@ -261,7 +261,6 @@ class _LoginState extends State<Login> {
                   ),
                   SizedBox(height: 30.0),
 
-                  // --- Đăng ký ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

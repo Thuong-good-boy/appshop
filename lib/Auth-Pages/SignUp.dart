@@ -252,11 +252,10 @@ class _SignUpState extends State<SignUp> {
 
         await DatabaseMethods().addUserDetails(userInfoMap, uid);
 
-        // Gửi mail chào mừng
         try {
           EmailService.sendRegistrationSuccess(email, name);
         } catch (e) {
-          print("Lỗi gửi mail: $e"); // Không chặn đăng ký nếu lỗi mail
+          print("Lỗi gửi mail: $e");
         }
 
         ScaffoldMessenger.of(context).showSnackBar(

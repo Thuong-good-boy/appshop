@@ -30,7 +30,7 @@ class ProductDeTail extends StatefulWidget {
 class _ProductDeTailState extends State<ProductDeTail> {
   bool _isBuyLoading = false;
   bool _isShoppingLoading = false;
-  bool _hasAddress = false; // Biến kiểm tra địa chỉ
+  bool _hasAddress = false;
   String? name, email, image;
 
   getthesharedpref() async {
@@ -42,9 +42,7 @@ class _ProductDeTailState extends State<ProductDeTail> {
   ontheload() async {
     await getthesharedpref();
 
-    // --- KIỂM TRA ĐỊA CHỈ TỪ FIREBASE ---
     if (email != null) {
-      // Lấy danh sách địa chỉ của user
       QuerySnapshot addressSnapshot = await FirebaseFirestore.instance
           .collection("Users")
           .doc(email)
@@ -198,14 +196,11 @@ class _ProductDeTailState extends State<ProductDeTail> {
                             onTap: () async {
                               if (_isBuyLoading) return;
 
-                              // --- LOGIC KIỂM TRA ĐỊA CHỈ ---
                               if (!_hasAddress) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text("Vui lòng thêm địa chỉ giao hàng!")),
                                 );
-                                // Chuyển sang trang nhập địa chỉ
                                 await Navigator.push(context, MaterialPageRoute(builder: (context) => AddressPage()));
-                                // Load lại để cập nhật _hasAddress sau khi user quay lại
                                 ontheload();
                                 return;
                               }

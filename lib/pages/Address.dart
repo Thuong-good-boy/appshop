@@ -194,7 +194,6 @@ class _AddressPageState extends State<AddressPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- PHẦN 1: NGƯỜI ĐẶT ---
               _buildSectionContainer(
                 isDark,
                 child: Column(
@@ -202,7 +201,6 @@ class _AddressPageState extends State<AddressPage> {
                   children: [
                     Text("Thông tin người đặt", style: headerStyle),
                     SizedBox(height: 10),
-                    // Radio Giới tính
                     Row(
                       children: [
                         _buildRadio(context, "Anh", "Anh", isDark),
@@ -210,7 +208,6 @@ class _AddressPageState extends State<AddressPage> {
                       ],
                     ),
                     SizedBox(height: 10),
-                    // Input Fields mới đẹp hơn
                     _buildStylishTextField(
                       controller: nameController,
                       label: "Họ và tên",
@@ -407,9 +404,7 @@ class _AddressPageState extends State<AddressPage> {
     );
   }
 
-  // --- WIDGETS LÀM ĐẸP (CUSTOM UI) ---
 
-  // 1. Ô Nhập liệu (TextField) xịn xò
   Widget _buildStylishTextField({
     required TextEditingController controller,
     required String label,
@@ -455,7 +450,6 @@ class _AddressPageState extends State<AddressPage> {
     );
   }
 
-  // 2. Dropdown xịn xò
   Widget _buildStylishDropdown<T>({
     required String hint,
     required T? value,
@@ -522,7 +516,6 @@ class _AddressPageState extends State<AddressPage> {
     );
   }
 
-  // 4. Radio Button tùy chỉnh
   Widget _buildRadio(BuildContext context, String title, String val, bool isDark) {
     return Expanded(
       child: RadioListTile<String>(

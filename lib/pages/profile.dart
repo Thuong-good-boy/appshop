@@ -233,7 +233,6 @@ class _ProfileState extends State<Profile> {
                 ),
               ),
 
-              // Đăng xuất
               _buildProfileOption(
                 context,
                 icon: Icons.logout,
@@ -259,7 +258,6 @@ class _ProfileState extends State<Profile> {
                 isAction: true,
                 textColor: Colors.redAccent,
                 onTap: () async {
-                  // Nên thêm Dialog xác nhận ở đây nếu có thời gian
                   await AuthMethods().deleteuser().then((value) {
                     Navigator.pushReplacement(context,
                         MaterialPageRoute(builder: (context) => Onboarding()));

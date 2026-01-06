@@ -136,8 +136,6 @@ class _ForgotpasswordState extends State<Forgotpassword> {
                                     style: TextStyle(fontSize: 15.0),
                                   )));
 
-                              // Tùy chọn: Sau khi gửi xong thì quay về trang Login luôn
-                              // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Login()));
 
                             } on FirebaseAuthException catch (e) {
                               String message = "Đã xảy ra lỗi.";
@@ -181,14 +179,12 @@ class _ForgotpasswordState extends State<Forgotpassword> {
                   ),
                   SizedBox(height: 30.0),
 
-                  // Nút quay lại Login
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text("Đã nhớ ra mật khẩu? ", style: Appwidget.lightTextStyle().copyWith(color: textColor)),
                       GestureDetector(
                         onTap: () {
-                          // Dùng pop để quay lại trang trước thay vì push chồng lên
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(builder: (context) => Login()),
@@ -206,8 +202,6 @@ class _ForgotpasswordState extends State<Forgotpassword> {
                     ],
                   ),
                   SizedBox(height: 20.0),
-
-                  // Nút Đăng ký (Phụ)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

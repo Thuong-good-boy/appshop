@@ -9,7 +9,6 @@ class ManageUsers extends StatefulWidget {
 }
 
 class _ManageUsersState extends State<ManageUsers> {
-  // Stream lắng nghe dữ liệu từ collection 'users'
   Stream? userStream;
 
   @override
@@ -19,12 +18,10 @@ class _ManageUsersState extends State<ManageUsers> {
   }
 
   getUsers() async {
-    // Lưu ý: Tên collection phải khớp với Database của bạn (thường là 'users' viết thường)
     userStream = FirebaseFirestore.instance.collection("users").snapshots();
     setState(() {});
   }
 
-  // --- HÀM XÓA USER ---
   Future<void> deleteUser(String id, String name) async {
     showDialog(
       context: context,
@@ -40,7 +37,6 @@ class _ManageUsersState extends State<ManageUsers> {
             onPressed: () async {
               Navigator.pop(context);
 
-              // Xóa document trong Firestore
               await FirebaseFirestore.instance.collection("users").doc(id).delete();
 
               ScaffoldMessenger.of(context).showSnackBar(
@@ -54,7 +50,6 @@ class _ManageUsersState extends State<ManageUsers> {
     );
   }
 
-  // Widget hiển thị danh sách
   Widget allUsers() {
     return StreamBuilder(
       stream: userStream,
@@ -73,7 +68,6 @@ class _ManageUsersState extends State<ManageUsers> {
           itemBuilder: (context, index) {
             DocumentSnapshot ds = snapshot.data.docs[index];
 
-            // Lấy dữ liệu an toàn (tránh lỗi null)
             String name = (ds.data() as Map<String, dynamic>).containsKey('Name') ? ds['Name'] : 'No Name';
             String email = (ds.data() as Map<String, dynamic>).containsKey('Email') ? ds['Email'] : 'No Email';
             String image = (ds.data() as Map<String, dynamic>).containsKey('Image') ? ds['Image'] : '';
@@ -90,7 +84,6 @@ class _ManageUsersState extends State<ManageUsers> {
               ),
               child: Row(
                 children: [
-                  // 1. Avatar (Có xử lý lỗi nếu ảnh hỏng)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(60), // Bo tròn thành hình tròn
                     child: image.isNotEmpty
@@ -105,7 +98,6 @@ class _ManageUsersState extends State<ManageUsers> {
                   ),
                   const SizedBox(width: 15),
 
-                  // 2. Thông tin (Tên & Email)
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,7 +130,6 @@ class _ManageUsersState extends State<ManageUsers> {
     );
   }
 
-  // Widget Avatar mặc định nếu user không có ảnh
   Widget _buildDefaultAvatar() {
     return Container(
       height: 60,

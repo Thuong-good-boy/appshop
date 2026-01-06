@@ -182,7 +182,6 @@ class _AddresslistState extends State<Addresslist> {
                         // Nút CHỌN (Đã sửa logic)
                         GestureDetector(
                           onTap: () {
-                            // Trả dữ liệu về trang trước thay vì push trang mới
                             Navigator.pop(context, {
                               "Name": ds["Name"],
                               "Phone": ds["Phone"],

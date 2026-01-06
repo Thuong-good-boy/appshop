@@ -3,7 +3,6 @@ import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shopnew/services/database.dart';
-// import 'package:shopnew/widget/support_widget.dart'; // Nếu bạn muốn dùng style cũ thì mở lại, mình đang dùng style mới trực tiếp
 
 class AddProduct extends StatefulWidget {
   const AddProduct({super.key});
@@ -129,7 +128,6 @@ class _AddProductState extends State<AddProduct> {
         ),
         centerTitle: true,
       ),
-      // SingleChildScrollView giúp cuộn khi bàn phím hiện lên -> Hết lỗi overflow
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Container(
@@ -137,7 +135,6 @@ class _AddProductState extends State<AddProduct> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- Phần chọn ảnh ---
               Center(
                 child: GestureDetector(
                   onTap: getImage,
@@ -244,7 +241,6 @@ class _AddProductState extends State<AddProduct> {
     );
   }
 
-  // Widget con giúp code gọn hơn và đẹp hơn
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
