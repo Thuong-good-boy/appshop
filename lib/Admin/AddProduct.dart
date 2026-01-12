@@ -24,7 +24,6 @@ class _AddProductState extends State<AddProduct> {
     'Watch', "Laptop", "TV", "Headphone", "Phone",
   ];
 
-  // Màu chủ đạo (bạn có thể thay đổi theo ý thích)
   final Color primaryColor = const Color(0xFFfd6f3e);
 
   Future<void> getImage() async {
@@ -76,7 +75,6 @@ class _AddProductState extends State<AddProduct> {
               content: Text("Sản phẩm đã được thêm thành công"),
             ),
           );
-          // Reset form sau khi thành công (tùy chọn)
           namecontroller.clear();
           pricecontroller.clear();
           detailcontroller.clear();
@@ -164,7 +162,6 @@ class _AddProductState extends State<AddProduct> {
               ),
               const SizedBox(height: 30),
 
-              // --- Các ô nhập liệu ---
               _buildTextField(
                   controller: namecontroller,
                   label: "Tên sản phẩm",
@@ -176,7 +173,7 @@ class _AddProductState extends State<AddProduct> {
                   controller: pricecontroller,
                   label: "Giá sản phẩm",
                   icon: Icons.attach_money,
-                  inputType: TextInputType.number // Bàn phím số cho giá tiền
+                  inputType: TextInputType.number
               ),
               const SizedBox(height: 20),
 
@@ -188,7 +185,6 @@ class _AddProductState extends State<AddProduct> {
               ),
               const SizedBox(height: 20),
 
-              // --- Dropdown Danh mục ---
               Text("Danh mục", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: Colors.black87)),
               const SizedBox(height: 10),
               Container(
@@ -214,7 +210,6 @@ class _AddProductState extends State<AddProduct> {
 
               const SizedBox(height: 40),
 
-              // --- Nút Submit ---
               SizedBox(
                 width: double.infinity,
                 height: 55,
@@ -233,7 +228,7 @@ class _AddProductState extends State<AddProduct> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20), // Padding bottom để không sát mép
+              const SizedBox(height: 20),
             ],
           ),
         ),

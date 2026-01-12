@@ -27,12 +27,10 @@ void main() async {
 
   Stripe.publishableKey = Publishablekey;
 
-  // Khởi tạo Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // 3. Thay đổi: Bọc MyApp trong ChangeNotifierProvider
   runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeProvider(),
@@ -50,25 +48,22 @@ class MyApp extends StatelessWidget {
       title: "shopNew",
       debugShowCheckedModeBanner: false,
 
-      // 4. Thay đổi: Cấu hình ThemeMode lấy từ Provider
       themeMode: Provider.of<ThemeProvider>(context).themeMode,
 
-      // Cấu hình giao diện Sáng (Light Mode)
       theme: ThemeData(
         brightness: Brightness.light,
-        scaffoldBackgroundColor: Color(0xfff2f2f2), // Màu nền xám như cũ
+        scaffoldBackgroundColor: Color(0xfff2f2f2),
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
 
-      // Cấu hình giao diện Tối (Dark Mode)
       darkTheme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: Color(0xFF121212), // Màu nền đen
+        scaffoldBackgroundColor: Color(0xFF121212),
         useMaterial3: true,
       ),
 
-      home: const AdminLogin(),
+      home: const Onboarding(),
     );
   }
 }

@@ -21,7 +21,6 @@ class _HomeState extends State<Home> {
   Stream? CategoryStream;
   bool search = false;
 
-  // Danh sách danh mục
   List categories = [
     "images/headphone_icon.png",
     "images/laptop.png",
@@ -37,7 +36,6 @@ class _HomeState extends State<Home> {
 
   String? name, image;
 
-  // --- Logic Tìm kiếm ---
   initiateSearch(value) async {
     if (value.length == 0) {
       setState(() {
@@ -60,7 +58,7 @@ class _HomeState extends State<Home> {
       QuerySnapshot docs = await DatabaseMethods().search(firstLetter);
       for (int i = 0; i < docs.docs.length; i++) {
         Map<String, dynamic> data = docs.docs[i].data() as Map<String, dynamic>;
-        data["Id"] = docs.docs[i].id; // Lấy ID document
+        data["Id"] = docs.docs[i].id;
         queryResultSet.add(data);
       }
     }
@@ -94,11 +92,9 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    // --- Lấy Theme ---
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
 
-    // Màu sắc động
     final Color bgColor = Theme.of(context).scaffoldBackgroundColor;
     final Color cardColor = isDark ? Color(0xFF1E1E1E) : Colors.white;
     final Color textColor = isDark ? Colors.white : Colors.black;
@@ -106,7 +102,6 @@ class _HomeState extends State<Home> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      // --- Nút Chatbot ---
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
@@ -114,7 +109,7 @@ class _HomeState extends State<Home> {
         },
         backgroundColor: Color(0xFFfd6f3e),
         elevation: 10.0,
-        shape: CircleBorder(), // Bo tròn hoàn toàn
+        shape: CircleBorder(),
         child: Icon(Icons.support_agent_rounded, color: Colors.white, size: 30),
       ),
 
@@ -129,7 +124,6 @@ class _HomeState extends State<Home> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // --- Header (Avatar + Hello) ---
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -173,7 +167,6 @@ class _HomeState extends State<Home> {
                 ),
                 SizedBox(height: 30.0),
 
-                // --- Search Box ---
                 Container(
                   width: MediaQuery.of(context).size.width,
                   decoration: BoxDecoration(
@@ -216,7 +209,6 @@ class _HomeState extends State<Home> {
                 ),
                 SizedBox(height: 20.0),
 
-                // --- Search Results Logic ---
                 search
                     ? ListView.builder(
                   padding: EdgeInsets.zero,
@@ -230,7 +222,6 @@ class _HomeState extends State<Home> {
                 )
                     : Column(
                   children: [
-                    // --- Categories Header ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -319,7 +310,7 @@ class _HomeState extends State<Home> {
                     SizedBox(height: 20.0),
 
                     Container(
-                      height: 280, // Tăng chiều cao để thẻ thoáng hơn
+                      height: 280,
                       child: StreamBuilder(
                         stream: CategoryStream,
                         builder: (context, AsyncSnapshot snapshot) {
@@ -402,7 +393,6 @@ class _HomeState extends State<Home> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Ảnh sản phẩm
             Center(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(15),
@@ -417,7 +407,6 @@ class _HomeState extends State<Home> {
               ),
             ),
             SizedBox(height: 10),
-            // Tên sản phẩm
             Text(
               name,
               style: Appwidget.semiboldTextStyle().copyWith(
@@ -520,7 +509,6 @@ class _HomeState extends State<Home> {
   }
 }
 
-// Widget Danh mục (Tách riêng để code gọn)
 class CategoryTile extends StatelessWidget {
   final String image, name;
   final Color cardColor;
@@ -545,7 +533,7 @@ class CategoryTile extends StatelessWidget {
         );
       },
       child: Container(
-        width: 90, // Cố định chiều rộng để đều nhau
+        width: 90,
         padding: EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: cardColor,
@@ -566,7 +554,7 @@ class CategoryTile extends StatelessWidget {
               image,
               height: 40.0,
               width: 40.0,
-              fit: BoxFit.contain, // Đổi thành contain để ảnh không bị méo
+              fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) => Icon(Icons.category, color: textColor),
             ),
             SizedBox(height: 10),

@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 
-// Import các file trong dự án của bạn
 import 'package:shopnew/Auth-Pages/Login.dart';
 import 'package:shopnew/pages/Address.dart';
 import 'package:shopnew/pages/AddressList.dart';
@@ -26,7 +25,6 @@ class Shopping extends StatefulWidget {
 }
 
 class _ShoppingState extends State<Shopping> {
-  // Định dạng tiền tệ VNĐ
   final currencyFormat = NumberFormat("#,##", "vi_VN");
 
   List<DocumentSnapshot> cartItems = [];
@@ -45,7 +43,6 @@ class _ShoppingState extends State<Shopping> {
     getOnLoad();
   }
 
-  // Khởi tạo dữ liệu ban đầu
   Future<void> getOnLoad() async {
     email = await Share_pref().getUserEmail();
     name = await Share_pref().getUserName();
@@ -61,7 +58,6 @@ class _ShoppingState extends State<Shopping> {
     }
   }
 
-  // --- WIDGET: HIỂN THỊ ĐỊA CHỈ ---
   Widget buildAddressCard(bool isDark) {
     Color cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     Color textColor = isDark ? Colors.white : Colors.black;
@@ -70,7 +66,6 @@ class _ShoppingState extends State<Shopping> {
     return StreamBuilder(
       stream: addressStream,
       builder: (context, AsyncSnapshot snapshot) {
-        // Trạng thái đang tải
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Container(
             height: 80,
@@ -79,7 +74,6 @@ class _ShoppingState extends State<Shopping> {
           );
         }
 
-        // Chưa có địa chỉ
         if (!snapshot.hasData || snapshot.data.docs.isEmpty) {
           currentAddressDoc = null;
           return GestureDetector(
@@ -104,7 +98,6 @@ class _ShoppingState extends State<Shopping> {
           );
         }
 
-        // Đã có địa chỉ -> Hiển thị
         currentAddressDoc = snapshot.data.docs[0];
         Map<String, dynamic> data = currentAddressDoc!.data() as Map<String, dynamic>;
 
@@ -153,7 +146,6 @@ class _ShoppingState extends State<Shopping> {
     );
   }
 
-  // --- WIDGET: DANH SÁCH GIỎ HÀNG ---
   Widget buildCartList(bool isDark) {
     Color cardColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     Color textColor = isDark ? Colors.white : Colors.black;
@@ -166,7 +158,6 @@ class _ShoppingState extends State<Shopping> {
         }
         if (!snapshot.hasData || snapshot.data.docs.isEmpty) {
           cartItems.clear();
-          // Reset tổng tiền khi giỏ hàng trống để tránh hiển thị sai
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (tong != 0 && mounted) setState(() { tong = 0; });
           });
@@ -175,13 +166,11 @@ class _ShoppingState extends State<Shopping> {
 
         cartItems = snapshot.data.docs;
 
-        // Tính tổng tiền
         double tempTong = 0;
         for (var ds in cartItems) {
           String price = ds["Price"].toString().replaceAll(".", "").replaceAll("₫", "").replaceAll(",", "");
           tempTong += (double.parse(price) * ds["Count"]);
         }
-        // Cập nhật biến tổng để hiển thị (dùng microtask để tránh lỗi setState khi build)
         if (tempTong != tong) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) setState(() { tong = tempTong; });
@@ -203,7 +192,6 @@ class _ShoppingState extends State<Shopping> {
               ),
               child: Row(
                 children: [
-                  // Ảnh sản phẩm
                   ClipRRect(
                     borderRadius: const BorderRadius.only(topLeft: Radius.circular(10), bottomLeft: Radius.circular(10)),
                     child: Image.network(
@@ -213,7 +201,6 @@ class _ShoppingState extends State<Shopping> {
                     ),
                   ),
                   const SizedBox(width: 15),
-                  // Thông tin
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,7 +212,6 @@ class _ShoppingState extends State<Shopping> {
                         const SizedBox(height: 5),
                         Text(ds["Price"], style: const TextStyle(color: Color(0xFFfd6f3e), fontWeight: FontWeight.bold, fontSize: 18)),
                         const SizedBox(height: 5),
-                        // Nút tăng giảm
                         Row(
                           children: [
                             _buildQuantityBtn(Icons.remove, () {
@@ -257,7 +243,6 @@ class _ShoppingState extends State<Shopping> {
     );
   }
 
-  // Widget nút tăng giảm số lượng nhỏ gọn
   Widget _buildQuantityBtn(IconData icon, VoidCallback onTap, bool isDark) {
     return InkWell(
       onTap: onTap,
@@ -288,10 +273,10 @@ class _ShoppingState extends State<Shopping> {
       List<Map<String, dynamic>> productsList = [];
       for (var doc in cartItems) {
         productsList.add({
-          "Name": doc["Product"],       // Tên SP
-          "Image": doc["ProductImage"], // Ảnh SP
-          "Price": doc["Price"],        // Giá tiền (String)
-          "Count": doc["Count"],        // Số lượng
+          "Name": doc["Product"],
+          "Image": doc["ProductImage"],
+          "Price": doc["Price"],
+          "Count": doc["Count"],
         });
       }
 
@@ -300,13 +285,13 @@ class _ShoppingState extends State<Shopping> {
 
       Map<String, dynamic> orderInfoMap = {
         "Email": email,
-        "Name": addrData["Name"],         // Tên người nhận
-        "Phone": addrData["Phone"],       // SĐT người nhận
-        "Address": fullAddress,           // Địa chỉ giao hàng
-        "Status": "Đang vận chuyển",      // Trạng thái ban đầu
-        "OrderTimestamp": FieldValue.serverTimestamp(), // Thời gian đặt (Server)
-        "Total": "${currencyFormat.format(tong)}₫",     // Tổng tiền
-        "Products": productsList,         // Danh sách sản phẩm (Quan trọng cho Admin)
+        "Name": addrData["Name"],
+        "Phone": addrData["Phone"],
+        "Address": fullAddress,
+        "Status": "Đang vận chuyển",
+        "OrderTimestamp": FieldValue.serverTimestamp(),
+        "Total": "${currencyFormat.format(tong)}₫",
+        "Products": productsList,
       };
 
       await makeStripePayment(tong.toStringAsFixed(0), orderInfoMap, productsList);
@@ -329,7 +314,6 @@ class _ShoppingState extends State<Shopping> {
         ),
       );
 
-      // Hiển thị bảng thanh toán
       await Stripe.instance.presentPaymentSheet();
 
 
@@ -339,19 +323,17 @@ class _ShoppingState extends State<Shopping> {
       await EmailService.sendOrderConfirmation(
         userEmail: email!,
         userName: name!,
-        productName: productNames, // Gửi danh sách tên SP
+        productName: productNames,
         price: "${currencyFormat.format(tong)}₫",
         orderId: DateTime.now().millisecondsSinceEpoch.toString(),
       );
 
-      // 3. Xóa giỏ hàng
       if (email != null) {
         for (var doc in cartItems) {
           await DatabaseMethods().deleteShopping(email!, doc.id);
         }
       }
 
-      // 4. Thông báo và reset
       setState(() {
         cartItems.clear();
         tong = 0;
@@ -408,11 +390,11 @@ class _ShoppingState extends State<Shopping> {
     try {
       final cleaneamount = amount.replaceAll(RegExp(r'\D'), '');
       final vnd = double.parse(cleaneamount);
-      final usd = vnd / 26334; // Tỷ giá tham khảo
+      final usd = vnd / 26334;
       final cents = (usd * 100).toInt();
       return cents.toString();
     } catch (e) {
-      return "100"; // Giá trị mặc định nếu lỗi parse
+      return "100";
     }
   }
 
@@ -443,14 +425,9 @@ class _ShoppingState extends State<Shopping> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Column(
           children: [
-            // Phần Địa chỉ
             buildAddressCard(isDark),
             const SizedBox(height: 15),
-
-            // Phần Danh sách sản phẩm (Dùng Expanded để chiếm phần còn lại)
             Expanded(child: buildCartList(isDark)),
-
-            // Phần Tổng tiền & Nút thanh toán
             Container(
               padding: const EdgeInsets.only(top: 20),
               decoration: BoxDecoration(

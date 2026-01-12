@@ -26,7 +26,6 @@ class _OrderHistoryState extends State<OrderHistory> {
   getontheload() async {
     await getthesharedpref();
     if (email != null) {
-      // Hàm getOrder trong DatabaseMethods cần trả về stream collection "Orders" của user
       orderStream = await DatabaseMethods().getOrder(email!);
       setState(() {});
     }
@@ -38,7 +37,6 @@ class _OrderHistoryState extends State<OrderHistory> {
     getontheload();
   }
 
-  // Widget hiển thị danh sách sản phẩm nhỏ trong 1 đơn hàng
   Widget buildProductList(List<dynamic> products, Color textColor) {
     return Column(
       children: products.map((item) {
@@ -75,7 +73,7 @@ class _OrderHistoryState extends State<OrderHistory> {
                 ),
               ),
               Text(
-                item["Tong"] ?? "", // Giá tổng của item đó
+                item["Tong"] ?? "",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor),
               ),
             ],
@@ -111,7 +109,6 @@ class _OrderHistoryState extends State<OrderHistory> {
             DocumentSnapshot ds = snapshot.data.docs[index];
             Map<String, dynamic> data = ds.data() as Map<String, dynamic>;
 
-            // Lấy dữ liệu an toàn
             List<dynamic> products = data["Products"] ?? [];
             String status = data["Status"] ?? "Đang xử lý";
             String total = data["Total"] ?? "0₫";
@@ -134,7 +131,6 @@ class _OrderHistoryState extends State<OrderHistory> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- Header: Mã đơn / Ngày / Status ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -158,14 +154,12 @@ class _OrderHistoryState extends State<OrderHistory> {
                   ),
                   Divider(color: Colors.grey.withOpacity(0.3), height: 20),
 
-                  // --- Body: Danh sách sản phẩm ---
                   products.isNotEmpty
                       ? buildProductList(products, textColor)
                       : Text("Không có thông tin sản phẩm", style: TextStyle(color: textColor)),
 
                   Divider(color: Colors.grey.withOpacity(0.3), height: 20),
 
-                  // --- Footer: Tổng tiền ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -191,7 +185,6 @@ class _OrderHistoryState extends State<OrderHistory> {
 
   @override
   Widget build(BuildContext context) {
-    // Theme setup
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
     final Color bgColor = Theme.of(context).scaffoldBackgroundColor;
@@ -202,7 +195,7 @@ class _OrderHistoryState extends State<OrderHistory> {
       backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: bgColor,
-        surfaceTintColor: bgColor, // Fix màu khi scroll
+        surfaceTintColor: bgColor,
         elevation: 0,
         centerTitle: true,
         title: Text(
@@ -211,7 +204,6 @@ class _OrderHistoryState extends State<OrderHistory> {
         ),
         leading: IconButton(
           onPressed: () {
-            // Dùng pop vì trang này được push từ Shopping
             Navigator.pop(context);
           },
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: textColor),

@@ -37,11 +37,9 @@ class _AddresslistState extends State<Addresslist> {
 
   @override
   Widget build(BuildContext context) {
-    // --- CẤU HÌNH THEME ---
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
 
-    // Định nghĩa màu sắc
     Color bgColor = isDark ? Color(0xFF121212) : Color(0xfff2f2f2);
     Color cardColor = isDark ? Color(0xFF1E1E1E) : Colors.white;
     Color textColor = isDark ? Colors.white : Colors.black;
@@ -62,7 +60,6 @@ class _AddresslistState extends State<Addresslist> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      // Nút thêm địa chỉ mới
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
@@ -95,7 +92,7 @@ class _AddresslistState extends State<Addresslist> {
                 padding: EdgeInsets.all(15),
                 margin: EdgeInsets.only(bottom: 15),
                 decoration: BoxDecoration(
-                  color: cardColor, // Màu nền thẻ theo theme
+                  color: cardColor,
                   borderRadius: BorderRadius.circular(15),
                   boxShadow: [
                     BoxShadow(
@@ -108,7 +105,6 @@ class _AddresslistState extends State<Addresslist> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Hàng trên: Tên + SĐT
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -132,7 +128,6 @@ class _AddresslistState extends State<Addresslist> {
                     ),
                     SizedBox(height: 8),
 
-                    // Địa chỉ chi tiết
                     Text(
                       "${ds["Line"]}, ${ds["Ward"]}, ${ds["District"]}, ${ds["City"]}",
                       style: TextStyle(
@@ -142,13 +137,11 @@ class _AddresslistState extends State<Addresslist> {
                       ),
                     ),
 
-                    Divider(color: Colors.grey.withOpacity(0.3)), // Kẻ ngang phân cách
+                    Divider(color: Colors.grey.withOpacity(0.3)),
 
-                    // Hàng dưới: Nút Xóa + Chọn
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Nút XÓA
                         GestureDetector(
                           onTap: () async {
                             bool? confirmDelete = await showDialog(
@@ -179,7 +172,6 @@ class _AddresslistState extends State<Addresslist> {
                           ),
                         ),
 
-                        // Nút CHỌN (Đã sửa logic)
                         GestureDetector(
                           onTap: () {
                             Navigator.pop(context, {

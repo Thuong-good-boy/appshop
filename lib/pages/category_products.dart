@@ -28,12 +28,10 @@ class _CategoryProductsState extends State<CategoryProducts> {
     super.initState();
   }
 
-  // Widget hiển thị danh sách sản phẩm
   Widget allProducts(Color cardColor, Color textColor) {
     return StreamBuilder(
       stream: CategoryStream,
       builder: (context, AsyncSnapshot snapshot) {
-        // Kiểm tra dữ liệu
         if (!snapshot.hasData) {
           return Center(child: CircularProgressIndicator());
         }
@@ -48,7 +46,7 @@ class _CategoryProductsState extends State<CategoryProducts> {
           padding: EdgeInsets.zero,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 0.70, // Tỷ lệ thẻ sản phẩm (cao/rộng)
+            childAspectRatio: 0.70,
             mainAxisSpacing: 15.0,
             crossAxisSpacing: 15.0,
           ),
@@ -57,7 +55,6 @@ class _CategoryProductsState extends State<CategoryProducts> {
             DocumentSnapshot ds = snapshot.data.docs[index];
             return GestureDetector(
               onTap: () {
-                // Chuyển sang trang chi tiết
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -74,7 +71,7 @@ class _CategoryProductsState extends State<CategoryProducts> {
               child: Container(
                 margin: EdgeInsets.all(2),
                 decoration: BoxDecoration(
-                  color: cardColor, // Màu nền thẻ thay đổi theo Theme
+                  color: cardColor,
                   borderRadius: BorderRadius.circular(15.0),
                   boxShadow: [
                     BoxShadow(
@@ -89,7 +86,6 @@ class _CategoryProductsState extends State<CategoryProducts> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // 1. Ảnh sản phẩm
                       Expanded(
                         child: Center(
                           child: ClipRRect(
@@ -106,25 +102,22 @@ class _CategoryProductsState extends State<CategoryProducts> {
                       ),
                       SizedBox(height: 10.0),
 
-                      // 2. Tên sản phẩm
                       Text(
                         ds["Name"],
                         style: TextStyle(
                           fontSize: 16.0,
                           fontWeight: FontWeight.bold,
-                          color: textColor, // Màu chữ thay đổi theo Theme
-                          fontFamily: 'Poppins', // Nếu có font này
+                          color: textColor,
+                          fontFamily: 'Poppins',
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       SizedBox(height: 5.0),
 
-                      // 3. Giá và Nút mũi tên
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // Giá tiền (Bọc Expanded để tránh tràn nếu giá quá dài)
                           Expanded(
                             child: Text(
                               ds["Price"],
@@ -137,7 +130,6 @@ class _CategoryProductsState extends State<CategoryProducts> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          // Nút mũi tên
                           Container(
                             padding: EdgeInsets.all(6),
                             decoration: BoxDecoration(

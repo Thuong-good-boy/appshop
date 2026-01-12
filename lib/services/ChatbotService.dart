@@ -70,7 +70,6 @@ class ChatbotService {
         String finalText = textResponse;
         List<Map<String, dynamic>> productsList = [];
 
-        // lấy id
         RegExp regExp = RegExp(r'\[PRODUCT_ID:\s*([^\]]+)\]');
         Iterable<RegExpMatch> matches = regExp.allMatches(textResponse);
 

@@ -98,7 +98,6 @@ class _SignUpState extends State<SignUp> {
                   ),
                   SizedBox(height: 20.0),
 
-                  // --- EMAIL ---
                   Text("Email", style: Appwidget.semiboldTextStyle().copyWith(color: textColor)),
                   SizedBox(height: 10.0),
                   TextFormField(
@@ -113,7 +112,6 @@ class _SignUpState extends State<SignUp> {
                   ),
                   SizedBox(height: 20.0),
 
-                  // --- MẬT KHẨU ---
                   Text("Mật khẩu", style: Appwidget.semiboldTextStyle().copyWith(color: textColor)),
                   SizedBox(height: 10.0),
                   TextFormField(
@@ -138,7 +136,6 @@ class _SignUpState extends State<SignUp> {
                   ),
                   SizedBox(height: 20.0),
 
-                  // --- XÁC NHẬN MẬT KHẨU ---
                   Text("Xác nhận mật khẩu", style: Appwidget.semiboldTextStyle().copyWith(color: textColor)),
                   SizedBox(height: 10.0),
                   TextFormField(
@@ -163,7 +160,6 @@ class _SignUpState extends State<SignUp> {
                   ),
                   SizedBox(height: 40.0),
 
-                  // --- NÚT ĐĂNG KÝ ---
                   Center(
                     child: SizedBox(
                       width: double.infinity,
@@ -183,7 +179,6 @@ class _SignUpState extends State<SignUp> {
                   ),
                   SizedBox(height: 20.0),
 
-                  // --- CHUYỂN QUA ĐĂNG NHẬP ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -206,7 +201,6 @@ class _SignUpState extends State<SignUp> {
     );
   }
 
-  // Hàm tái sử dụng Style cho Input
   InputDecoration _buildInputDecoration(String hint, IconData icon, Color fillColor, Color hintColor, {Widget? suffixIcon}) {
     return InputDecoration(
       contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
@@ -220,7 +214,6 @@ class _SignUpState extends State<SignUp> {
     );
   }
 
-  // Hàm xử lý Logic Đăng ký
   Future<void> _handleSignUp() async {
     if (_formkey.currentState!.validate()) {
       setState(() => _isLoading = true);
@@ -235,7 +228,6 @@ class _SignUpState extends State<SignUp> {
         );
 
         String uid = user.user!.uid;
-        // Tạo avatar theo tên
         String avata = "https://ui-avatars.com/api/?name=${name}&background=random&color=fff&size=128";
 
         await Share_pref().saveUserId(uid);

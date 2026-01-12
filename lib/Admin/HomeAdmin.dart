@@ -65,16 +65,14 @@ class _HomeAdminState extends State<HomeAdmin> {
               Text("Chức năng quản lý", style: Appwidget.boldTextStyle()),
               SizedBox(height: 20.0),
 
-              // --- GRID CÁC CHỨC NĂNG ---
               GridView.count(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(), // Để scroll theo parent
                 crossAxisCount: 2, // 2 cột
                 crossAxisSpacing: 20,
                 mainAxisSpacing: 20,
-                childAspectRatio: 1.1, // Tỉ lệ khung hình
+                childAspectRatio: 1.1,
                 children: [
-                  // 1. Thêm sản phẩm
                   _buildMenuCard(
                     title: "Add Product",
                     icon: Icons.add_circle_outline,

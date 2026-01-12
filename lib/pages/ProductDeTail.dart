@@ -10,7 +10,6 @@ import 'package:shopnew/services/theme_provider.dart';
 import 'package:shopnew/widget/support_widget.dart';
 import 'package:http/http.dart' as http;
 import 'package:shopnew/services/EmailService.dart';
-// Import trang Address của bạn
 import 'package:shopnew/pages/Address.dart';
 
 class ProductDeTail extends StatefulWidget {
@@ -80,7 +79,6 @@ class _ProductDeTailState extends State<ProductDeTail> {
       body: SafeArea(
         child: Column(
           children: [
-            // --- PHẦN TRÊN: ẢNH & NÚT BACK ---
             Stack(
               children: [
                 Container(
@@ -239,7 +237,6 @@ class _ProductDeTailState extends State<ProductDeTail> {
     );
   }
 
-  // --- GIỮ NGUYÊN PHẦN STRIPE PAYMENT CỦA BẠN ---
   Future<void> makepayment(String amount) async {
     try {
       paymentIntent = await createPaymentIntent(amount, 'usd');
@@ -258,7 +255,6 @@ class _ProductDeTailState extends State<ProductDeTail> {
     try {
       await Stripe.instance.presentPaymentSheet().then((value) async {
 
-        // Lấy địa chỉ mới nhất để lưu vào đơn hàng
         var addrSnap = await FirebaseFirestore.instance.collection("Users").doc(email).collection("Address").get();
         var addrData = addrSnap.docs.first.data();
         String fullAddr = "${addrData["Line"]}, ${addrData["Ward"]}, ${addrData["District"]}, ${addrData["City"]}";

@@ -6,7 +6,6 @@ import 'package:shopnew/services/database.dart';
 import 'package:shopnew/services/share_pref.dart';
 import 'package:shopnew/services/theme_provider.dart';
 
-// --- MODELS (Giữ nguyên) ---
 class Province {
   final int code;
   final String name;
@@ -27,7 +26,6 @@ class Ward {
   Ward({required this.code, required this.name});
   factory Ward.fromJson(Map<String, dynamic> json) => Ward(code: json['code'], name: json['name']);
 }
-// ---------------------------------------------
 
 class AddressPage extends StatefulWidget {
   const AddressPage({super.key});
@@ -39,21 +37,17 @@ class AddressPage extends StatefulWidget {
 class _AddressPageState extends State<AddressPage> {
   String? email;
   final _formKey = GlobalKey<FormState>();
-
-  // Controllers
   final nameController = TextEditingController();
   final phoneController = TextEditingController();
   final addressLineController = TextEditingController();
   final receiverNameController = TextEditingController();
   final receiverPhoneController = TextEditingController();
 
-  // State UI
   String gioitinh = "Anh";
   int deliveryMethod = 0;
   bool isDifferentReceiver = false;
   bool isloading = false;
 
-  // Data Location
   List<Province> provinces = [];
   List<District> districts = [];
   List<Ward> wards = [];
@@ -77,7 +71,6 @@ class _AddressPageState extends State<AddressPage> {
     setState(() {});
   }
 
-  // --- API CALLS (Giữ nguyên) ---
   Future<void> fetchProvinces() async {
     setState(() => isProvincesLoading = true);
     try {
@@ -164,10 +157,8 @@ class _AddressPageState extends State<AddressPage> {
 
   @override
   Widget build(BuildContext context) {
-    // --- CẤU HÌNH THEME ---
     final isDark = Provider.of<ThemeProvider>(context).isDarkMode;
 
-    // Màu sắc
     Color bgColor = isDark ? Color(0xFF121212) : Color(0xfff2f2f2);
     Color cardColor = isDark ? Color(0xFF1E1E1E) : Colors.white;
     Color textColor = isDark ? Colors.white : Colors.black;
@@ -267,7 +258,6 @@ class _AddressPageState extends State<AddressPage> {
 
               SizedBox(height: 20),
 
-              // --- PHẦN 2: ĐỊA CHỈ (Chỉ hiện khi Giao tận nơi) ---
               if (deliveryMethod == 0)
                 _buildSectionContainer(
                   isDark,
@@ -333,7 +323,6 @@ class _AddressPageState extends State<AddressPage> {
 
               SizedBox(height: 10),
 
-              // Checkbox Người khác nhận
               if (deliveryMethod == 0)
                 Theme(
                   data: Theme.of(context).copyWith(unselectedWidgetColor: subTextColor),
@@ -379,7 +368,6 @@ class _AddressPageState extends State<AddressPage> {
 
               SizedBox(height: 30),
 
-              // Button Xác nhận
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -496,7 +484,6 @@ class _AddressPageState extends State<AddressPage> {
     );
   }
 
-  // 3. Khung chứa (Card)
   Widget _buildSectionContainer(bool isDark, {required Widget child}) {
     return Container(
       width: double.infinity,
